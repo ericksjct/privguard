@@ -1,0 +1,14 @@
+.env
+.env.*
+data_sensivel/
+cooperados/
+dump_*
+*.cooperados.csv
+*.cpf.txt
+credenciais*
+segredo*
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
