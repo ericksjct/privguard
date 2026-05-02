@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 1 context gathered
-last_updated: "2026-05-01T20:53:03.453Z"
-last_activity: 2026-05-01 - Roadmap created with 32 v1 requirements mapped across 5 coarse phases.
+status: executing
+stopped_at: Plan 02-01 completed verification; commits blocked by git index permission
+last_updated: "2026-05-02T14:26:24.369Z"
+last_activity: 2026-05-02 -- Phase 02 execution started
 progress:
   total_phases: 5
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
-  percent: 0
+  completed_phases: 1
+  total_plans: 8
+  completed_plans: 5
+  percent: 63
 ---
 
 # Project State
@@ -22,37 +22,41 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Project:** privguard
 **Core value:** No sensitive Brazilian or company data should be sent to external LLM providers in clear text.
-**Current focus:** Phase 1 - Package Foundation
+**Current focus:** Phase 02 — privacy-core
 
 ## Current Position
 
-Phase: 1 of 5 (Package Foundation)
-Plan: Not planned yet
-Status: Ready to plan
-Last activity: 2026-05-01 - Roadmap created with 32 v1 requirements mapped across 5 coarse phases.
+Phase: 02 (privacy-core) — EXECUTING
+Plan: 1 of 4
+Status: Executing Phase 02
+Last activity: 2026-05-02 -- Phase 02 execution started
 
-Progress: [----------] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: N/A
-- Total execution time: 0.0 hours
+- Total plans completed: 8
+- Average duration: 3min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01-package-foundation | 4 | 11min | 3min |
+| 01 | 4 | - | - |
 
 **Recent Trend:**
 
-- Last 5 plans: none
-- Trend: N/A
+- Last 5 plans: 01-01, 01-02, 01-04, 01-03
+- Trend: Phase 1 complete
 
 *Updated after each plan completion*
+| Phase 01 P02 | 2min | 2 tasks | 5 files |
+| Phase 01-package-foundation P04 | 3min | 2 tasks | 9 files |
+| Phase 01-package-foundation P03 | 4min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -65,6 +69,13 @@ Recent decisions affecting current work:
 - Strict/fail-closed behavior is the default when rewrite cannot be guaranteed.
 - Claude Code is the first concrete integration; Codex remains evidence-based compatibility work until interception and rewrite semantics are proven.
 - Tests and examples must use only synthetic data and must not read `.env` or `data_sensivel` contents.
+- [Phase 01]: Plan 01-02 kept Hit.value internal for masking while policy summaries expose only kind, offsets, and score.
+- [Phase 01]: Plan 01-02 preserved hook-era sensitive path regex categories without reading protected files.
+- [Phase 01-package-foundation]: Plan 01-04 kept demos runnable but changed default stdout to metadata instead of raw sample text.
+- [Phase 01-package-foundation]: Plan 01-04 separated Presidio and Ollama demos under demos/ and removed known root-era sensitive-looking literals from moved sources.
+- [Phase 01-package-foundation]: Plan 01-03 kept Claude hook file paths stable and moved reusable behavior into privguard.hooks.
+- [Phase 01-package-foundation]: Plan 01-03 used sanitized reason codes instead of raw paths, commands, or matched values in hook denials.
+- [Phase 01-package-foundation]: Plan 01-03 added repo-root path setup in hook adapters so direct hooks/*.py execution can import privguard.
 
 ### Pending Todos
 
@@ -75,6 +86,7 @@ None yet.
 - Codex interception and rewrite capability is unproven; Phase 4 must gather evidence before support claims.
 - Claude prompt rewrite capability is unproven; Phase 3 should block sensitive prompts unless safe rewrite is verified.
 - Current codebase has no package manifest, formal test suite, or production CLI.
+- Plan 02-01 code and verification completed, but git cannot create .git/index.lock in this workspace; task and metadata commits are blocked.
 
 ## Deferred Items
 
@@ -88,6 +100,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-01T20:53:03.393Z
-Stopped at: Phase 1 context gathered
-Resume file: .planning/phases/01-package-foundation/01-CONTEXT.md
+Last session: 2026-05-02T14:26:24.366Z
+Stopped at: Plan 02-01 completed verification; commits blocked by git index permission
+Resume file: .planning/phases/02-privacy-core/02-01-SUMMARY.md
