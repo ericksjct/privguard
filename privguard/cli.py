@@ -41,12 +41,28 @@ def cmd_scan(args: argparse.Namespace) -> int:
 
 
 def cmd_mask(args: argparse.Namespace) -> int:
+    """Mask PII in text.
+
+    Exit codes:
+      0 — masking verified; output on stdout is safe to forward.
+      2 — masking unverified; output goes to stderr only; do NOT forward.
+    """
     result = mask_text(_read_text(args))
+    if not result.verified:
+        if args.json:
+            print(to_json(result), file=sys.stderr)
+        else:
+            print(
+                f"mask verification failed: {result.verification_status} "
+                f"reasons={list(result.reason_codes)}",
+                file=sys.stderr,
+            )
+        return 2
     if args.json:
         print(to_json(result))
     else:
         print(result.text)
-    return 0 if result.verified else 2
+    return 0
 
 
 def cmd_policy_check(args: argparse.Namespace) -> int:
