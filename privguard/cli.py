@@ -8,7 +8,14 @@ from importlib.metadata import PackageNotFoundError, version
 
 from . import __version__
 from .detection import analyze_text, detect
-from .diagnostics import format_text, to_dict, to_json
+from .diagnostics import (
+    build_claude_doctor_report,
+    claude_doctor_passed,
+    format_claude_doctor_text,
+    format_text,
+    to_dict,
+    to_json,
+)
 from .masking import mask_text
 from .policy import SurfaceCapability, classify_path, decide_policy
 
@@ -89,6 +96,15 @@ def cmd_policy_check(args: argparse.Namespace) -> int:
     return 0 if decision.allow else 2
 
 
+def cmd_claude_doctor(args: argparse.Namespace) -> int:
+    report = build_claude_doctor_report(args.settings)
+    if args.json:
+        print(to_json(report))
+    else:
+        print(format_claude_doctor_text(report))
+    return 0 if claude_doctor_passed(report) else 2
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="privguard")
     subparsers = parser.add_subparsers(required=True)
@@ -117,6 +133,14 @@ def main(argv: list[str] | None = None) -> int:
         default=SurfaceCapability.UNKNOWN,
     )
     policy.set_defaults(func=cmd_policy_check)
+
+    claude = subparsers.add_parser("claude")
+    claude_subparsers = claude.add_subparsers(required=True)
+
+    doctor = claude_subparsers.add_parser("doctor")
+    doctor.add_argument("--json", action="store_true")
+    doctor.add_argument("--settings", default=".claude/settings.json")
+    doctor.set_defaults(func=cmd_claude_doctor)
 
     args = parser.parse_args(argv)
     return args.func(args)
