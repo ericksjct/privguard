@@ -65,10 +65,13 @@ Plans:
   3. Developer can attempt command exfiltration patterns involving protected paths and the hook denies them with sanitized reason codes.
   4. Developer can validate Claude hook installation and effective policy without reading `.env`, dumps, credentials, or `data_sensivel` contents.
   5. Claude hook stdout, stderr, and JSON responses never include raw matched values, prompt snippets, protected file contents, or secret-looking substrings.
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 03-01: TBD
+- [x] 03-01-PLAN.md — Harden prompt hook output and default blocking.
+- [x] 03-02-PLAN.md — Expand PreToolUse protected-path and command blocking.
+- [x] 03-03-PLAN.md — Add safe `privguard claude doctor` diagnostics.
+- [x] 03-04-PLAN.md — Add Phase 03 synthetic regression gate and collection hygiene. (completed 2026-05-03)
 
 ### Phase 4: Codex Compatibility Evidence
 **Goal**: Codex support is represented honestly through tested interception evidence, capability labels, and no automatic masking claims until raw payload replacement is proven.

@@ -39,11 +39,11 @@ Requirements for the initial release. Each maps to roadmap phases.
 
 ### Claude
 
-- [ ] **CLD-01**: Claude Code `UserPromptSubmit` integration blocks sensitive prompts when safe rewrite is unavailable.
-- [ ] **CLD-02**: Claude Code `PreToolUse` integration blocks reads, searches, edits, writes, and shell commands that reference protected paths.
-- [ ] **CLD-03**: Claude Code `PreToolUse` integration blocks command exfiltration patterns involving protected paths, network tools, archive tools, encoding tools, or clipboard commands.
-- [ ] **CLD-04**: Claude hook outputs never include raw matched values, original prompt snippets, protected file contents, or secret-looking substrings.
-- [ ] **CLD-05**: Developer can validate Claude hook installation and effective policy without reading protected files.
+- [x] **CLD-01**: Claude Code `UserPromptSubmit` integration blocks sensitive prompts when safe rewrite is unavailable.
+- [x] **CLD-02**: Claude Code `PreToolUse` integration blocks reads, searches, edits, writes, and shell commands that reference protected paths.
+- [x] **CLD-03**: Claude Code `PreToolUse` integration blocks command exfiltration patterns involving protected paths, network tools, archive tools, encoding tools, or clipboard commands.
+- [x] **CLD-04**: Claude hook outputs never include raw matched values, original prompt snippets, protected file contents, or secret-looking substrings.
+- [x] **CLD-05**: Developer can validate Claude hook installation and effective policy without reading protected files.
 
 ### Codex
 
@@ -118,11 +118,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | POL-02 | Phase 2 | Complete |
 | POL-03 | Phase 2 | Complete |
 | POL-04 | Phase 2 | Complete |
-| CLD-01 | Phase 3 | Pending |
-| CLD-02 | Phase 3 | Pending |
-| CLD-03 | Phase 3 | Pending |
-| CLD-04 | Phase 3 | Pending |
-| CLD-05 | Phase 3 | Pending |
+| CLD-01 | Phase 3 | Complete |
+| CLD-02 | Phase 3 | Complete |
+| CLD-03 | Phase 3 | Complete |
+| CLD-04 | Phase 3 | Complete |
+| CLD-05 | Phase 3 | Complete |
 | CDX-01 | Phase 4 | Pending |
 | CDX-02 | Phase 4 | Pending |
 | CDX-03 | Phase 4 | Pending |
