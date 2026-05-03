@@ -6,6 +6,7 @@ from privguard.policy import classify_command
 
 
 SYNTHETIC_PATH = "data_sensivel/synthetic.csv"
+_PROJECT_ROOT = pathlib.Path(__file__).parent.parent
 
 
 def test_command_classification_blocks_strict_exfil_categories() -> None:
@@ -76,7 +77,7 @@ def test_command_classification_allows_clean_commands() -> None:
 
 
 def test_command_classification_source_does_not_read_files() -> None:
-    source = pathlib.Path("privguard/policy.py").read_text(encoding="utf-8")
+    source = (_PROJECT_ROOT / "privguard" / "policy.py").read_text(encoding="utf-8")
 
     assert ".read_text(" not in source
     assert ".open(" not in source
