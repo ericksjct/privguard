@@ -34,6 +34,11 @@ def check_glob_grep(tool_input: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _inline_threshold() -> float:
+    """Return the PII detection threshold, shared by prompt and tool surfaces."""
+    return float(os.environ.get("PII_GUARD_THRESHOLD", "0.7"))
+
+
 def check_bash(tool_input: dict) -> tuple[bool, str]:
     command = tool_input.get("command", "") or ""
     if not command:
@@ -48,7 +53,7 @@ def check_bash(tool_input: dict) -> tuple[bool, str]:
         if any(rx.search(command) for rx in SENSITIVE_GLOBS):
             return False, "sensitive_network_command"
 
-    if detect(command, min_score=0.85):
+    if detect(command, min_score=_inline_threshold()):
         return False, "inline_pii"
 
     return True, ""
