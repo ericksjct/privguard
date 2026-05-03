@@ -30,6 +30,18 @@ def test_redact_remains_compatible_wrapper() -> None:
     assert redact(text, hits) == "CPF <BR_CPF>"
 
 
+def test_mask_text_normalizes_caller_provided_hit_order() -> None:
+    text = "CPF 123.456.789-09 CNPJ 12.345.678/0001-95"
+    hits = list(reversed(detection.detect(text)))
+
+    result = mask_text(text, hits=hits)
+
+    assert result.verified is True
+    assert "123.456.789-09" not in result.text
+    assert "12.345.678/0001-95" not in result.text
+    assert result.text == "CPF <BR_CPF> CNPJ <BR_CNPJ>"
+
+
 def test_verify_mask_fails_when_original_value_remains() -> None:
     text = "CPF 123.456.789-09"
     hits = detection.detect(text)

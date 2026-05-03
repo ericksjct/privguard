@@ -153,6 +153,7 @@ def decide_policy(
     mask_result: MaskResult | None = None,
     path_classification: PathClassification | None = None,
     mode: str = PolicyMode.STRICT,
+    payload_text: str | None = None,
 ) -> PolicyDecision:
     normalized_capability = capability if capability in SurfaceCapability.ALL else SurfaceCapability.UNKNOWN
     selected_hits = _hits_from(hits=hits, report=report)
@@ -195,8 +196,13 @@ def decide_policy(
         return _decision(PolicyAction.ALLOW, normalized_capability, (*reasons, "no_sensitive_hits"), 0, protected_path)
 
     if normalized_capability in {SurfaceCapability.UNKNOWN, SurfaceCapability.EXTERNAL}:
-        if mask_result and mask_result.verified:
-            return _decision(PolicyAction.ALLOW, normalized_capability, (*reasons, "mask_verified"), hit_count, protected_path)
+        payload_matches_mask = (
+            mask_result is not None
+            and payload_text is not None
+            and payload_text == mask_result.text
+        )
+        if mask_result and mask_result.verified and payload_matches_mask:
+            return _decision(PolicyAction.ALLOW, normalized_capability, (*reasons, "mask_verified", "payload_masked"), hit_count, protected_path)
         if mode == PolicyMode.PERMISSIVE and hit_count == 0:
             return _decision(PolicyAction.ALLOW, normalized_capability, (*reasons, "permissive_no_sensitive_hits"), 0, protected_path)
         return _decision(PolicyAction.BLOCK, normalized_capability, (*reasons, "fail_closed_surface"), hit_count, protected_path)

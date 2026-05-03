@@ -78,6 +78,19 @@ def test_detects_secret_like_values_without_exposing_report_values() -> None:
         assert hit.value not in sanitized
 
 
+def test_detects_common_token_and_assignment_formats() -> None:
+    text = (
+        "api_key=plain-secret-value "
+        "token: another-secret-value "
+        "slack=xoxb-123456789012-123456789012-abcdefghijklmnopqrstuv"
+    )
+
+    kinds = _kinds(text)
+
+    assert "SECRET_ASSIGNMENT" in kinds
+    assert "TOKEN" in kinds
+
+
 def test_detect_import_contract_and_report_counts_are_stable() -> None:
     hit = detection.detect("CPF 123.456.789-09")[0]
     report = detection.analyze_text("CPF 123.456.789-09")

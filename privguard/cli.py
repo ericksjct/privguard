@@ -59,6 +59,7 @@ def cmd_policy_check(args: argparse.Namespace) -> int:
         hits=hits,
         mask_result=mask_result,
         path_classification=path_classification,
+        payload_text=mask_result.text if mask_result is not None else text,
     )
     payload = {
         "decision": to_dict(decision),

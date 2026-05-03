@@ -29,6 +29,18 @@ def _replace_spans(text: str, hits: Sequence[Hit]) -> str:
     return "".join(out)
 
 
+def _normalize_hits(hits: Sequence[Hit]) -> tuple[Hit, ...]:
+    ordered = sorted(hits, key=lambda h: (h.start, -(h.end - h.start)))
+    kept: list[Hit] = []
+    cursor = -1
+    for hit in ordered:
+        if hit.start < cursor:
+            continue
+        kept.append(hit)
+        cursor = hit.end
+    return tuple(kept)
+
+
 def verify_mask(
     original_text: str,
     masked_text: str,
@@ -59,7 +71,7 @@ def mask_text(
     hits: Sequence[Hit] | None = None,
     min_score: float = 0.6,
 ) -> MaskResult:
-    selected_hits = tuple(hits if hits is not None else detect(text, min_score=min_score))
+    selected_hits = _normalize_hits(hits if hits is not None else detect(text, min_score=min_score))
     masked_text = _replace_spans(text, selected_hits)
     verified, verification_reasons = verify_mask(
         text,
@@ -82,4 +94,7 @@ def mask_text(
 
 
 def redact(text: str, hits: list[Hit]) -> str:
-    return mask_text(text, hits=hits).text
+    result = mask_text(text, hits=hits)
+    if not result.verified:
+        raise ValueError("mask verification failed")
+    return result.text

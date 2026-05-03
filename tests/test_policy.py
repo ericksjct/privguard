@@ -107,11 +107,24 @@ def test_unknown_external_allow_verified_masked_output_only() -> None:
     hits = detect(raw_text)
     result = mask_text(raw_text, hits=hits)
 
-    decision = decide_policy(SurfaceCapability.EXTERNAL, hits=hits, mask_result=result)
+    raw_decision = decide_policy(
+        SurfaceCapability.EXTERNAL,
+        hits=hits,
+        mask_result=result,
+        payload_text=raw_text,
+    )
+    decision = decide_policy(
+        SurfaceCapability.EXTERNAL,
+        hits=hits,
+        mask_result=result,
+        payload_text=result.text,
+    )
 
+    assert raw_decision.action == PolicyAction.BLOCK
     assert decision.allow is True
     assert decision.action == PolicyAction.ALLOW
     assert "mask_verified" in decision.reason_codes
+    assert "payload_masked" in decision.reason_codes
 
 
 def test_protected_path_blocks_before_surface_policy() -> None:
