@@ -101,6 +101,17 @@ Plans:
 Plans:
 - [ ] 05-01: TBD
 
+## Backlog
+
+### Phase 999.1: WebFetch Domain Allowlist (BACKLOG)
+
+**Goal:** Permitir `WebFetch` apenas para domínios confiáveis (ex: github.com, docs.python.org) em vez de bloquear completamente. Implementar `check_webfetch()` em `privguard/hooks.py` com `_ALLOWED_FETCH_DOMAINS` e inspeção via `urlparse`. Atualmente `WebFetch` fica bloqueado e o fluxo recomendado é Bash+curl (opção de menor risco).
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
 ## Progress
 
 **Execution Order:**
