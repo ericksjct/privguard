@@ -6,7 +6,7 @@ import re
 from dataclasses import dataclass
 from typing import Sequence
 
-from .detection import DetectionReport, Hit
+from .detection import DetectionReport, Hit, detect
 from .diagnostics import format_hit_summary as _format_hit_summary
 from .diagnostics import summarize_hits as _summarize_hits
 from .masking import MaskResult
@@ -24,6 +24,13 @@ SENSITIVE_GLOBS = [
 @dataclass(frozen=True)
 class PathClassification:
     is_protected: bool
+    category: str
+    reason_code: str
+
+
+@dataclass(frozen=True)
+class CommandClassification:
+    is_blocked: bool
     category: str
     reason_code: str
 
@@ -79,6 +86,26 @@ EXFIL_CMDS = re.compile(
     re.IGNORECASE,
 )
 
+COPY_CMDS = re.compile(
+    r"\b(?:cp|copy|xcopy|robocopy|Copy-Item|cpi)\b",
+    re.IGNORECASE,
+)
+
+ARCHIVE_CMDS = re.compile(
+    r"\b(?:tar|zip|7z|Compress-Archive)\b",
+    re.IGNORECASE,
+)
+
+ENCODING_CMDS = re.compile(
+    r"\b(?:base64|certutil|openssl)\b|-(?:en|de)code\b",
+    re.IGNORECASE,
+)
+
+CLIPBOARD_CMDS = re.compile(
+    r"\b(?:Set-Clipboard|clip|pbcopy|xclip|xsel)\b",
+    re.IGNORECASE,
+)
+
 
 def _normalize_path(path: str) -> str:
     value = str(path or "").strip().strip("\"'")
@@ -121,6 +148,40 @@ def classify_path(path: str) -> PathClassification:
 
 def is_sensitive_path(path: str) -> bool:
     return classify_path(path).is_protected
+
+
+def _command_has_protected_path(command: str) -> bool:
+    if any(rx.search(command) for rx in SENSITIVE_GLOBS):
+        return True
+
+    for match in re.finditer(r"""["']?([A-Za-z]:[^\s"'`|<>;&]+|[.\w\-\\/]+)["']?""", command):
+        token = match.group(1).strip()
+        if token and classify_path(token).is_protected:
+            return True
+    return False
+
+
+def classify_command(command: str) -> CommandClassification:
+    value = str(command or "")
+    if not value.strip():
+        return CommandClassification(False, "empty", "command_empty")
+
+    if _command_has_protected_path(value):
+        for category, reason_code, pattern in (
+            ("clipboard", "protected_command_clipboard", CLIPBOARD_CMDS),
+            ("network", "protected_command_network", EXFIL_CMDS),
+            ("archive", "protected_command_archive", ARCHIVE_CMDS),
+            ("encoding", "protected_command_encoding", ENCODING_CMDS),
+            ("copy", "protected_command_copy", COPY_CMDS),
+            ("read", "protected_command_read", READ_CMDS),
+        ):
+            if pattern.search(value):
+                return CommandClassification(True, category, reason_code)
+
+    if detect(value):
+        return CommandClassification(True, "inline_pii", "inline_pii")
+
+    return CommandClassification(False, "unprotected", "command_unprotected")
 
 
 def _hits_from(

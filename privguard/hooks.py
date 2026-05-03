@@ -4,12 +4,11 @@ from __future__ import annotations
 
 import json
 import os
-import re
 import sys
 
 from .detection import detect
 from .diagnostics import format_hit_summary, summarize_hits, to_json
-from .policy import EXFIL_CMDS, READ_CMDS, SENSITIVE_GLOBS, is_sensitive_path
+from .policy import classify_command, classify_path
 
 
 def deny(prefix: str, reason_code: str) -> int:
@@ -17,11 +16,51 @@ def deny(prefix: str, reason_code: str) -> int:
     return 2
 
 
+def _deny_pre_tool(
+    *,
+    reason_code: str,
+    category: str,
+    path_count: int = 0,
+    command_count: int = 0,
+) -> int:
+    details = [
+        f"reason={reason_code}",
+        "action=block",
+        "event=PreToolUse",
+        f"category={category}",
+    ]
+    if path_count:
+        details.append(f"path_count={path_count}")
+    if command_count:
+        details.append(f"command_count={command_count}")
+    details.append("remediation=remove_protected_path_or_use_synthetic_fixture")
+    sys.stderr.write("[PRE-TOOL-GUARD BLOQUEADO] " + " ".join(details) + "\n")
+    return 2
+
+
+def _iter_path_values(value: object) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        paths: list[str] = []
+        for key, item in value.items():
+            if any(name in str(key).lower() for name in ("path", "pattern")):
+                paths.extend(_iter_path_values(item))
+        return paths
+    if isinstance(value, list):
+        paths = []
+        for item in value:
+            paths.extend(_iter_path_values(item))
+        return paths
+    return []
+
+
 def check_path_tool(tool_input: dict) -> tuple[bool, str]:
     for key in ("file_path", "path", "notebook_path"):
-        value = tool_input.get(key)
-        if value and is_sensitive_path(str(value)):
-            return False, "sensitive_path"
+        for value in _iter_path_values(tool_input.get(key)):
+            classification = classify_path(value)
+            if classification.is_protected:
+                return False, classification.reason_code
     return True, ""
 
 
@@ -29,8 +68,10 @@ def check_glob_grep(tool_input: dict) -> tuple[bool, str]:
     pattern = tool_input.get("pattern", "")
     path = tool_input.get("path", "")
     for value in (pattern, path):
-        if value and is_sensitive_path(str(value)):
-            return False, "sensitive_glob_or_grep"
+        if value:
+            classification = classify_path(str(value))
+            if classification.is_protected:
+                return False, classification.reason_code
     return True, ""
 
 
@@ -91,17 +132,9 @@ def check_bash(tool_input: dict) -> tuple[bool, str]:
     if not command:
         return True, ""
 
-    if READ_CMDS.search(command):
-        for match in re.finditer(r"[\"']?([\w\-./\\:]{3,})[\"']?", command):
-            if is_sensitive_path(match.group(1)):
-                return False, "sensitive_read_command"
-
-    if EXFIL_CMDS.search(command):
-        if any(rx.search(command) for rx in SENSITIVE_GLOBS):
-            return False, "sensitive_network_command"
-
-    if detect(command, min_score=_inline_threshold()):
-        return False, "inline_pii"
+    classification = classify_command(command)
+    if classification.is_blocked:
+        return False, classification.reason_code
 
     return True, ""
 
@@ -151,7 +184,7 @@ def main_user_prompt() -> int:
 
 
 _KNOWN_LOCAL_TOOLS = frozenset({
-    "Read", "Edit", "Write", "NotebookEdit",
+    "Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "NotebookRead",
     "Glob", "Grep",
     "Bash", "PowerShell",
 })
@@ -173,24 +206,29 @@ def main_pre_tool() -> int:
     # through unblocked.  WebFetch, WebSearch, MCP-bridged tools, and any
     # future Anthropic-added tools are denied until explicitly allow-listed.
     if tool not in _KNOWN_LOCAL_TOOLS:
-        return deny("PRE-TOOL-GUARD", "unknown_tool")
+        return _deny_pre_tool(reason_code="unknown_tool", category="unknown_tool")
 
-    if tool in ("Read", "Edit", "Write", "NotebookEdit"):
+    if tool in ("Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "NotebookRead"):
         ok, reason_code = check_path_tool(tool_input)
         if not ok:
-            return deny("PRE-TOOL-GUARD", reason_code)
+            return _deny_pre_tool(reason_code=reason_code, category="protected_path", path_count=1)
         return 0
 
     if tool in ("Glob", "Grep"):
         ok, reason_code = check_glob_grep(tool_input)
         if not ok:
-            return deny("PRE-TOOL-GUARD", reason_code)
+            return _deny_pre_tool(reason_code=reason_code, category="protected_path", path_count=1)
         return 0
 
     if tool in ("Bash", "PowerShell"):
-        ok, reason_code = check_bash(tool_input)
-        if not ok:
-            return deny("PRE-TOOL-GUARD", reason_code)
+        command = str(tool_input.get("command", "") or "")
+        classification = classify_command(command)
+        if classification.is_blocked:
+            return _deny_pre_tool(
+                reason_code=classification.reason_code,
+                category=classification.category,
+                command_count=1,
+            )
         return 0
 
     return 0
