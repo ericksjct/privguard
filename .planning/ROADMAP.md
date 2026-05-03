@@ -12,8 +12,8 @@ This roadmap turns the current Presidio demos and Claude hook scripts into a reu
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: Package Foundation** - Developers can install and run a reusable local package/CLI without demo scripts becoming production behavior.
-- [ ] **Phase 2: Privacy Core** - Detection, masking, path classification, policy decisions, and safe diagnostics share one fail-closed contract.
+- [x] **Phase 1: Package Foundation** - Developers can install and run a reusable local package/CLI without demo scripts becoming production behavior.
+- [x] **Phase 2: Privacy Core** - Detection, masking, path classification, policy decisions, and safe diagnostics share one fail-closed contract.
 - [ ] **Phase 3: Claude Enforcement** - Claude Code prompt and tool hooks enforce strict outbound privacy and protected-path blocking with sanitized output.
 - [ ] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
 - [ ] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
@@ -29,10 +29,13 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Developer can run CLI diagnostics and local masking checks without invoking root-level demo scripts.
   3. Reusable detection, masking, policy, and adapter code is importable from package modules.
   4. Existing demos are clearly separated from production code and do not print raw sensitive data by default.
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 01-01: TBD
+- [x] 01-01-PLAN.md — Add setuptools package metadata and `privguard info`.
+- [x] 01-02-PLAN.md — Extract lightweight detection, masking, and policy modules.
+- [x] 01-03-PLAN.md — Refactor Claude hook entry files into package-backed adapters.
+- [x] 01-04-PLAN.md — Move demos into `demos/` and remove raw-value default demo printing.
 
 ### Phase 2: Privacy Core
 **Goal**: Supported clients and CLI commands share Brazil-first detection, irreversible masking, protected-path classification, fail-closed policy decisions, and sanitized diagnostics.
@@ -44,10 +47,13 @@ Plans:
   3. User can rely on strict mode as the default for external-provider workflows, including unknown providers and unclassified client targets.
   4. User can see whether a surface is rewrite-capable, block-only, observe-only, or unsupported before the guard allows external submission.
   5. Lightweight hook detection and Presidio-backed detection agree on validator semantics for shared synthetic fixtures.
-**Plans**: TBD
+**Plans**: 4 plans
 
 Plans:
-- [ ] 02-01: TBD
+- [x] 02-01-PLAN.md — Build the shared Brazil-first detection contract and synthetic parity tests.
+- [x] 02-02-PLAN.md — Add irreversible masking, verification, and sanitized diagnostics.
+- [x] 02-03-PLAN.md — Implement protected-path classification and fail-closed policy decisions.
+- [x] 02-04-PLAN.md — Wire Phase 2 core into CLI commands and package exports.
 
 ### Phase 3: Claude Enforcement
 **Goal**: Claude Code is protected by production hook adapters that block sensitive prompts, protected file access, risky tool commands, and unsafe outputs when rewrite cannot be guaranteed.
@@ -99,8 +105,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Package Foundation | 0/TBD | Not started | - |
-| 2. Privacy Core | 0/TBD | Not started | - |
+| 1. Package Foundation | 4/4 | Complete | 2026-05-02 |
+| 2. Privacy Core | 4/4 | Complete | 2026-05-03 |
 | 3. Claude Enforcement | 0/TBD | Not started | - |
 | 4. Codex Compatibility Evidence | 0/TBD | Not started | - |
 | 5. Synthetic Regression Gate | 0/TBD | Not started | - |

@@ -9,33 +9,33 @@ Requirements for the initial release. Each maps to roadmap phases.
 
 ### Packaging
 
-- [ ] **PKG-01**: Developer can install the project as a local Python package with a reproducible dependency manifest.
-- [ ] **PKG-02**: Developer can run a `privacy-guard` CLI entry point for diagnostics and local masking checks.
-- [ ] **PKG-03**: Reusable detection, masking, policy, and adapter code lives in importable package modules instead of root-level demo scripts.
-- [ ] **PKG-04**: Existing demos are separated from production code and do not print raw sensitive data by default.
+- [x] **PKG-01**: Developer can install the project as a local Python package with a reproducible dependency manifest.
+- [x] **PKG-02**: Developer can run a `privacy-guard` CLI entry point for diagnostics and local masking checks.
+- [x] **PKG-03**: Reusable detection, masking, policy, and adapter code lives in importable package modules instead of root-level demo scripts.
+- [x] **PKG-04**: Existing demos are separated from production code and do not print raw sensitive data by default.
 
 ### Detection
 
-- [ ] **DET-01**: Guard can detect synthetic Brazilian CPF values with checksum validation.
-- [ ] **DET-02**: Guard can detect synthetic Brazilian CNPJ values with checksum validation.
-- [ ] **DET-03**: Guard can detect additional Brazilian identifiers including CNH, voter title, PIS/PASEP, SUS, RG-like values, phone numbers, CEP, and vehicle plates.
-- [ ] **DET-04**: Guard can detect secret-like values including API keys, tokens, passwords, database URLs, and environment variable assignments.
-- [ ] **DET-05**: Guard can classify protected paths including `.env`, `.env.*`, `data_sensivel/**`, dumps, credential-like files, and secret-like filenames without reading file contents.
-- [ ] **DET-06**: Lightweight hook detection and Presidio-backed detection share validator semantics and synthetic fixtures to prevent drift.
+- [x] **DET-01**: Guard can detect synthetic Brazilian CPF values with checksum validation.
+- [x] **DET-02**: Guard can detect synthetic Brazilian CNPJ values with checksum validation.
+- [x] **DET-03**: Guard can detect additional Brazilian identifiers including CNH, voter title, PIS/PASEP, SUS, RG-like values, phone numbers, CEP, and vehicle plates.
+- [x] **DET-04**: Guard can detect secret-like values including API keys, tokens, passwords, database URLs, and environment variable assignments.
+- [x] **DET-05**: Guard can classify protected paths including `.env`, `.env.*`, `data_sensivel/**`, dumps, credential-like files, and secret-like filenames without reading file contents.
+- [x] **DET-06**: Lightweight hook detection and Presidio-backed detection share validator semantics and synthetic fixtures to prevent drift.
 
 ### Masking
 
-- [ ] **MASK-01**: Guard can replace detected sensitive values with typed placeholders before any external-provider submission path.
-- [ ] **MASK-02**: Guard verifies masked output does not contain the original synthetic sensitive substrings before allowing it onward.
-- [ ] **MASK-03**: Guard uses irreversible masking for v1 and does not require or persist deanonymization maps.
-- [ ] **MASK-04**: Guard blocks instead of allowing clear text when a client surface cannot prove that masking replaced the outbound payload.
+- [x] **MASK-01**: Guard can replace detected sensitive values with typed placeholders before any external-provider submission path.
+- [x] **MASK-02**: Guard verifies masked output does not contain the original synthetic sensitive substrings before allowing it onward.
+- [x] **MASK-03**: Guard uses irreversible masking for v1 and does not require or persist deanonymization maps.
+- [x] **MASK-04**: Guard blocks instead of allowing clear text when a client surface cannot prove that masking replaced the outbound payload.
 
 ### Policy
 
-- [ ] **POL-01**: Guard exposes explicit policy modes with strict/fail-closed behavior as the default for external-provider workflows.
-- [ ] **POL-02**: Guard distinguishes supported rewrite-capable surfaces, block-only surfaces, observe-only surfaces, and unsupported clients.
-- [ ] **POL-03**: Guard treats unknown or unclassified provider targets as external and requires masking or blocking.
-- [ ] **POL-04**: Guard emits only sanitized decisions and diagnostics containing entity types, counts, offsets, and reason codes.
+- [x] **POL-01**: Guard exposes explicit policy modes with strict/fail-closed behavior as the default for external-provider workflows.
+- [x] **POL-02**: Guard distinguishes supported rewrite-capable surfaces, block-only surfaces, observe-only surfaces, and unsupported clients.
+- [x] **POL-03**: Guard treats unknown or unclassified provider targets as external and requires masking or blocking.
+- [x] **POL-04**: Guard emits only sanitized decisions and diagnostics containing entity types, counts, offsets, and reason codes.
 
 ### Claude
 
@@ -100,24 +100,24 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| PKG-01 | Phase 1 | Pending |
-| PKG-02 | Phase 1 | Pending |
-| PKG-03 | Phase 1 | Pending |
-| PKG-04 | Phase 1 | Pending |
-| DET-01 | Phase 2 | Pending |
-| DET-02 | Phase 2 | Pending |
-| DET-03 | Phase 2 | Pending |
-| DET-04 | Phase 2 | Pending |
-| DET-05 | Phase 2 | Pending |
-| DET-06 | Phase 2 | Pending |
-| MASK-01 | Phase 2 | Pending |
-| MASK-02 | Phase 2 | Pending |
-| MASK-03 | Phase 2 | Pending |
-| MASK-04 | Phase 2 | Pending |
-| POL-01 | Phase 2 | Pending |
-| POL-02 | Phase 2 | Pending |
-| POL-03 | Phase 2 | Pending |
-| POL-04 | Phase 2 | Pending |
+| PKG-01 | Phase 1 | Complete |
+| PKG-02 | Phase 1 | Complete |
+| PKG-03 | Phase 1 | Complete |
+| PKG-04 | Phase 1 | Complete |
+| DET-01 | Phase 2 | Complete |
+| DET-02 | Phase 2 | Complete |
+| DET-03 | Phase 2 | Complete |
+| DET-04 | Phase 2 | Complete |
+| DET-05 | Phase 2 | Complete |
+| DET-06 | Phase 2 | Complete |
+| MASK-01 | Phase 2 | Complete |
+| MASK-02 | Phase 2 | Complete |
+| MASK-03 | Phase 2 | Complete |
+| MASK-04 | Phase 2 | Complete |
+| POL-01 | Phase 2 | Complete |
+| POL-02 | Phase 2 | Complete |
+| POL-03 | Phase 2 | Complete |
+| POL-04 | Phase 2 | Complete |
 | CLD-01 | Phase 3 | Pending |
 | CLD-02 | Phase 3 | Pending |
 | CLD-03 | Phase 3 | Pending |
@@ -140,4 +140,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-05-01*
-*Last updated: 2026-05-01 after roadmap creation*
+*Last updated: 2026-05-03 after Phase 2 verification*

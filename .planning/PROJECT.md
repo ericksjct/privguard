@@ -1,0 +1,88 @@
+# privguard
+
+## What This Is
+
+privguard is a privacy package for LLM and code-agent workflows in terminal/IDE environments. It started as Microsoft Presidio experiments, but the product direction is now to automatically mask sensitive data before prompts, tool calls, or local context can be sent to external providers such as Anthropic or OpenAI.
+
+The initial focus is Brazilian sensitive data: CPF, CNPJ, names, bank/account data, API keys, environment variables, credentials, dumps, and local sensitive files. The package should act locally at the agent boundary and prevent sensitive company data from leaving the machine or corporate environment.
+
+## Core Value
+
+No sensitive Brazilian or company data should be sent to external LLM providers in clear text.
+
+## Requirements
+
+### Validated
+
+- ✓ Brazilian PII detection can be built on Microsoft Presidio with custom recognizers and checksum validators for CPF, CNPJ, CNH, voter title, PIS/PASEP, SUS, RG, phone, CEP, and vehicle plates — existing demo code
+- ✓ Prompt and tool-use guard hooks exist for Claude Code and can block or warn on detected sensitive data — existing hook code
+- ✓ Sensitive local paths such as `.env` and `data_sensivel/**` are protected by Claude Code deny rules and pre-tool guard checks — existing configuration
+- ✓ Local-only reversible anonymization has been demonstrated, proving that sensitive text can be transformed before an LLM-facing step — existing demo code
+- ✓ Local LLM routing with Ollama has been demonstrated as an alternative to remote providers — existing demo code
+- ✓ Phase 1 validated package foundation: `pyproject.toml`, importable `privguard` modules, `privguard info`, package-backed hook adapters, and demos separated under `demos/` — Phase 1 Package Foundation; editable-install wrapper has a pending environment UAT due local pip temp-permission errors
+- ✓ Phase 2 validated privacy core: Brazil-first detection, irreversible masking, protected-path classification, fail-closed policy decisions, sanitized diagnostics, CLI scan/mask/policy-check, and synthetic regression coverage — Phase 2 Privacy Core
+
+### Active
+
+- [ ] Provide a practical integration path for Claude Code first and keep Codex/other IDE-agent support as an explicit compatibility target
+- [ ] Add automated tests that prove sensitive values are not echoed, logged, or passed through unmasked
+
+### Out of Scope
+
+- Building a hosted SaaS or cloud proxy — the protection boundary must stay local for now
+- Desmascaramento after LLM responses — v1 only needs masking before external submission
+- Full application integration framework support such as LangChain or LlamaIndex — terminal/IDE code-agent use comes first
+- Guaranteeing protection in clients that do not support hooks, wrappers, proxies, or equivalent interception points — unsupported clients need a separate integration design
+- Using real sensitive files as fixtures or committed examples — tests should use synthetic data only
+
+## Context
+
+The user wants this project to enforce privacy for LLM-assisted development and code-agent usage. The risk being addressed is accidental exfiltration of Brazilian personal data, credentials, environment variables, account information, dumps, or other sensitive company data to remote LLM servers.
+
+The current codebase has a package foundation and a validated Phase 2 privacy core. The shared core now includes synthetic-only Brazilian identifier and secret detection, irreversible typed masking with verification, protected-path classification without file reads, fail-closed surface policy decisions, sanitized diagnostics, public package exports, and CLI `scan`, `mask`, and `policy-check` commands. Editable-install console-wrapper verification remains pending in UAT because local pip temp directory permissions blocked `python -m pip install -e .`.
+
+The current Claude integration blocks prompts and tool usage in some cases, but v1 product behavior should move toward automatic masking before external submission. Because automatic rewriting depends on the agent/client integration surface, the implementation should start with the surfaces that can be controlled locally and fail closed where masking cannot be guaranteed.
+
+The user is not yet sure which exact integrations beyond Claude/Codex should be supported or how strict the balance should be between false positives and developer friction. The roadmap should therefore make privacy policy defaults explicit and validate them early.
+
+## Constraints
+
+- **Privacy boundary**: Raw sensitive data must stay local and must not be sent to Anthropic, OpenAI, or other external LLM providers — this is the purpose of the project.
+- **Initial environment**: v1 targets terminal/IDE code-agent workflows, especially Claude Code and Codex-style usage — broader app/framework integrations are deferred.
+- **Locale priority**: Brazilian sensitive data types must be first-class, not an afterthought — CPF, CNPJ, bank/account data, names, contact data, credentials, and environment variables are central.
+- **Masking behavior**: v1 needs masking before submission, not deanonymization after the response — simpler privacy model and less key-management risk.
+- **Safety default**: If a client surface cannot be safely rewritten, the tool should block rather than silently allow clear-text submission — avoids false confidence.
+- **Data hygiene**: Real sensitive datasets and `.env` values must not be read into planning docs, tests, generated examples, or commits — synthetic fixtures only.
+- **Current stack**: Python, Microsoft Presidio, spaCy Portuguese models, and lightweight hook scripts are already present — reuse them unless a phase proves a better boundary is needed.
+
+## Key Decisions
+
+| Decision | Rationale | Outcome |
+|----------|-----------|---------|
+| Target terminal/IDE code-agent workflows first | The immediate risk is Claude/Codex-style agent usage, not arbitrary application traffic | — Pending |
+| Mask before external submission | The user wants safe outbound prompts rather than post-response restoration | — Pending |
+| Do not require desmascaramento in v1 | Reduces key-management complexity and avoids storing reversible maps unnecessarily | — Pending |
+| Treat Claude Code as the first concrete integration | The repo already has Claude hook configuration and guard scripts | — Pending |
+| Keep Codex/other IDE agents as compatibility targets | The user wants Claude/Codex coverage but the exact Codex interception surface still needs validation | — Pending |
+| Favor fail-closed behavior where automatic masking cannot be guaranteed | The core value is zero clear-text leakage to external providers | — Pending |
+| Bind external allow decisions to verified masked payloads | A local mask check alone is insufficient unless the authorized payload equals the verified masked text | Phase 2 policy core requires `payload_text == mask_result.text` for unknown/external allow |
+
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `$gsd-transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `$gsd-complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
+---
+*Last updated: 2026-05-03 after Phase 2 completion*
