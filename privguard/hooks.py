@@ -58,7 +58,8 @@ def main_user_prompt() -> int:
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):
-        return 0
+        sys.stderr.write("[PII-GUARD BLOQUEADO] reason=malformed_payload\n")
+        return 2
 
     prompt = payload.get("prompt", "") or ""
     if not prompt.strip():
@@ -102,16 +103,30 @@ def main_user_prompt() -> int:
     return 2
 
 
+_KNOWN_LOCAL_TOOLS = frozenset({
+    "Read", "Edit", "Write", "NotebookEdit",
+    "Glob", "Grep",
+    "Bash", "PowerShell",
+})
+
+
 def main_pre_tool() -> int:
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):
-        return 0
+        sys.stderr.write("[PRE-TOOL-GUARD BLOQUEADO] reason=malformed_payload\n")
+        return 2
 
     tool = payload.get("tool_name", "")
     tool_input = payload.get("tool_input", {}) or {}
     if not isinstance(tool_input, dict):
         tool_input = {}
+
+    # Fail closed: only explicitly known local tools are allowed to pass
+    # through unblocked.  WebFetch, WebSearch, MCP-bridged tools, and any
+    # future Anthropic-added tools are denied until explicitly allow-listed.
+    if tool not in _KNOWN_LOCAL_TOOLS:
+        return deny("PRE-TOOL-GUARD", "unknown_tool")
 
     if tool in ("Read", "Edit", "Write", "NotebookEdit"):
         ok, reason_code = check_path_tool(tool_input)
