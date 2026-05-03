@@ -228,13 +228,9 @@ def test_codex_doc_does_not_claim_automatic_masking() -> None:
 
 
 def test_codex_doc_does_not_read_protected_files() -> None:
-    """CDX-03/hygiene: The test file itself must not open protected paths."""
-    # Verify test source does not call open() on protected paths
-    source = pathlib.Path(__file__).read_text(encoding="utf-8")
-    # We do read codex-compatibility.md which is safe (no PII), but we must
-    # not read .env or data_sensivel contents
-    assert ".env" not in source or "PROTECTED_ENV" not in source or True  # PROTECTED_ENV is a label
-    # Actual check: no open() calls on protected paths
-    assert 'open(".env"' not in source
-    assert "open('data_sensivel" not in source
-    assert 'read_text(".env"' not in source
+    """CDX-03/hygiene: codex.py must not read protected file contents."""
+    # Verify that privguard/codex.py does not call open() or read_text() on protected paths
+    codex_source = pathlib.Path("privguard/codex.py").read_text(encoding="utf-8")
+    # Must not contain open() or read_text() calls on protected paths
+    assert ".read_text(" not in codex_source, "privguard/codex.py must not read file contents"
+    assert ".open(" not in codex_source, "privguard/codex.py must not open files"
