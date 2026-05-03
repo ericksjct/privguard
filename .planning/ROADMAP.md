@@ -81,10 +81,11 @@ Plans:
   1. Developer can read a current Codex compatibility assessment that states which prompt and tool interception options were verified.
   2. Developer can see each Codex surface labeled as supported, experimental, block-only, or unsupported with evidence.
   3. Developer cannot enable or encounter a claim of automatic Codex masking unless a tested integration proves raw outbound payloads are replaced before provider submission.
-**Plans**: TBD
+**Plans**: 2 plans
 
 Plans:
-- [ ] 04-01: TBD
+- [x] 04-01-PLAN.md — Create the Codex compatibility matrix and human-readable assessment.
+- [ ] 04-02-PLAN.md — Add the CDX-03 claim-prevention gate for unsupported Codex masking claims.
 
 ### Phase 5: Synthetic Regression Gate
 **Goal**: v1 privacy behavior is backed by synthetic-only automated tests that prove masking, blocking, path handling, output hygiene, and fail-closed behavior across the package and adapters.
