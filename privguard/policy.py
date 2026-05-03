@@ -109,9 +109,12 @@ def classify_path(path: str) -> PathClassification:
         return PathClassification(True, "protected_data", "protected_path_data")
     if re.match(r"dump_[\w\-]+\.[a-z0-9]+$", name):
         return PathClassification(True, "dump_file", "protected_path_dump")
-    if re.search(r"(?:credentials?|credenciais?)", name):
+    # Word-boundary patterns: tokens must appear as a discrete word in the
+    # filename (separated by ., _, -, or at start/end of stem) to avoid
+    # false-positives on names like tokenizer.py, keychain.md, secretary.txt.
+    if re.search(r"(?:^|[._-])(?:credentials?|credenciais?)(?:[._-]|$)", name):
         return PathClassification(True, "credentials_file", "protected_path_credentials")
-    if re.search(r"(?:secret|segredo|token|key)", name):
+    if re.search(r"(?:^|[._-])(?:secret|segredo|token|key|api[._-]?key)(?:[._-]|$)", name):
         return PathClassification(True, "secret_filename", "protected_path_secret_name")
     return PathClassification(False, "unprotected", "path_unprotected")
 
