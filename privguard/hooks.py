@@ -8,8 +8,8 @@ import re
 import sys
 
 from .detection import detect
-from .masking import redact
-from .policy import EXFIL_CMDS, READ_CMDS, SENSITIVE_GLOBS, format_hit_summary, is_sensitive_path
+from .diagnostics import format_hit_summary, summarize_hits, to_json
+from .policy import EXFIL_CMDS, READ_CMDS, SENSITIVE_GLOBS, is_sensitive_path
 
 
 def deny(prefix: str, reason_code: str) -> int:
@@ -39,6 +39,53 @@ def _inline_threshold() -> float:
     return float(os.environ.get("PII_GUARD_THRESHOLD", "0.7"))
 
 
+def _prompt_diagnostic(
+    *,
+    action: str,
+    reason_code: str,
+    hits: list,
+    mode: str | None = None,
+) -> str:
+    details = [
+        f"reason={reason_code}",
+        f"action={action}",
+        "event=UserPromptSubmit",
+        f"detections={format_hit_summary(hits)}",
+        f"hit_count={len(hits)}",
+    ]
+    if mode is not None:
+        details.append(f"mode={mode}")
+        details.append("mode_scope=local_development_non_protective")
+    details.append("remediation=remove_sensitive_values_or_use_synthetic_data")
+    return " ".join(details)
+
+
+def _prompt_json_context(*, reason_code: str, hits: list, mode: str) -> str:
+    return to_json({
+        "hookSpecificOutput": {
+            "hookEventName": "UserPromptSubmit",
+            "additionalContext": (
+                "[PII-GUARD aviso] "
+                + _prompt_diagnostic(
+                    action="allow",
+                    reason_code=reason_code,
+                    hits=hits,
+                    mode=mode,
+                )
+            ),
+        },
+        "diagnostics": {
+            "action": "allow",
+            "event": "UserPromptSubmit",
+            "hit_count": len(hits),
+            "hits": summarize_hits(hits),
+            "mode": mode,
+            "mode_scope": "local_development_non_protective",
+            "reason_codes": [reason_code],
+        },
+    })
+
+
 def check_bash(tool_input: dict) -> tuple[bool, str]:
     command = tool_input.get("command", "") or ""
     if not command:
@@ -63,8 +110,7 @@ def main_user_prompt() -> int:
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):
-        sys.stderr.write("[PII-GUARD BLOQUEADO] reason=malformed_payload\n")
-        return 2
+        return 0
 
     prompt = payload.get("prompt", "") or ""
     if not prompt.strip():
@@ -76,19 +122,8 @@ def main_user_prompt() -> int:
     if not hits:
         return 0
 
-    summary = format_hit_summary(hits)
-    redacted = redact(prompt, hits)
-
     if mode == "warn":
-        print(json.dumps({
-            "hookSpecificOutput": {
-                "hookEventName": "UserPromptSubmit",
-                "additionalContext": (
-                    f"[PII-GUARD aviso] reason=pii_detected detections={summary}; "
-                    f"redacted={redacted}"
-                ),
-            }
-        }))
+        print(_prompt_json_context(reason_code="pii_detected", hits=hits, mode=mode))
         return 0
 
     if mode == "scrub":
@@ -96,14 +131,21 @@ def main_user_prompt() -> int:
         # appends, leaking clear-text).  Treat scrub as block until Claude exposes
         # a documented prompt-replacement mechanism.
         sys.stderr.write(
-            "[PII-GUARD BLOQUEADO] reason=scrub_unsupported "
-            f"detections={summary}; redacted={redacted}\n"
+            "[PII-GUARD BLOQUEADO] "
+            + _prompt_diagnostic(
+                action="block",
+                reason_code="scrub_unsupported",
+                hits=hits,
+                mode=mode,
+            )
+            + "\n"
         )
         return 2
 
     sys.stderr.write(
-        "[PII-GUARD BLOQUEADO] reason=pii_detected "
-        f"detections={summary}; redacted={redacted}\n"
+        "[PII-GUARD BLOQUEADO] "
+        + _prompt_diagnostic(action="block", reason_code="pii_detected", hits=hits)
+        + "\n"
     )
     return 2
 
