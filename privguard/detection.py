@@ -197,12 +197,14 @@ def detect(text: str, min_score: float = 0.6) -> list[Hit]:
     for entry in PATTERNS:
         for m in entry.regex.finditer(text):
             value = m.group(0)
-            hit_score = entry.score
-            reason_code = entry.reason_code
+            # Skip hits whose checksum fails entirely — do NOT emit a
+            # downgraded score that would shadow other kinds covering the
+            # same span (e.g. BR_CPF failing checksum would block BR_CNH
+            # and BR_PIS_PASEP from the same 11-digit value).
             if entry.validator and not entry.validator(value):
-                hit_score = 0.05
-                reason_code = "checksum_invalid"
-            raw.append(Hit(entry.kind, m.start(), m.end(), value, hit_score, reason_code))
+                continue
+            raw.append(Hit(entry.kind, m.start(), m.end(), value,
+                           entry.score, entry.reason_code))
 
     raw = [h for h in raw if h.score >= min_score]
     raw.sort(key=lambda h: (-h.score, -(h.end - h.start), h.start))
