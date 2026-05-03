@@ -184,10 +184,36 @@ def main_user_prompt() -> int:
 
 
 _KNOWN_LOCAL_TOOLS = frozenset({
+    # File / notebook tools
     "Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "NotebookRead",
     "Glob", "Grep",
+    # Shell
     "Bash", "PowerShell",
+    # Claude Code orchestration / meta tools (no external data egress)
+    "Agent", "Task",
+    "TaskCreate", "TaskGet", "TaskList", "TaskOutput", "TaskStop", "TaskUpdate",
+    "ToolSearch",
+    "AskUserQuestion",
+    "ExitPlanMode", "EnterPlanMode",
+    "ExitWorktree", "EnterWorktree",
+    "Monitor",
+    "PushNotification", "RemoteTrigger", "ScheduleWakeup",
+    "CronCreate", "CronDelete", "CronList",
+    "Skill",
 })
+
+# MCP plugin prefixes whose tools are trusted (local memory, no external egress).
+# WebFetch / WebSearch remain blocked — they are network-egress surfaces.
+_ALLOWED_MCP_PREFIXES = (
+    "mcp__plugin_mempalace_mempalace__",
+    "mcp__ide__",
+)
+
+
+def _is_allowed_tool(tool: str) -> bool:
+    if tool in _KNOWN_LOCAL_TOOLS:
+        return True
+    return any(tool.startswith(prefix) for prefix in _ALLOWED_MCP_PREFIXES)
 
 
 def main_pre_tool() -> int:
@@ -202,10 +228,9 @@ def main_pre_tool() -> int:
     if not isinstance(tool_input, dict):
         tool_input = {}
 
-    # Fail closed: only explicitly known local tools are allowed to pass
-    # through unblocked.  WebFetch, WebSearch, MCP-bridged tools, and any
-    # future Anthropic-added tools are denied until explicitly allow-listed.
-    if tool not in _KNOWN_LOCAL_TOOLS:
+    # Fail closed: WebFetch, WebSearch, and unknown MCP tools are blocked.
+    # Add entries to _KNOWN_LOCAL_TOOLS or _ALLOWED_MCP_PREFIXES to allow more.
+    if not _is_allowed_tool(tool):
         return _deny_pre_tool(reason_code="unknown_tool", category="unknown_tool")
 
     if tool in ("Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "NotebookRead"):
