@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import sys
 
@@ -77,7 +78,13 @@ def check_glob_grep(tool_input: dict) -> tuple[bool, str]:
 
 def _inline_threshold() -> float:
     """Return the PII detection threshold, shared by prompt and tool surfaces."""
-    return float(os.environ.get("PII_GUARD_THRESHOLD", "0.7"))
+    try:
+        threshold = float(os.environ.get("PII_GUARD_THRESHOLD", "0.7"))
+    except ValueError:
+        return 0.7
+    if not math.isfinite(threshold) or threshold < 0 or threshold > 1:
+        return 0.7
+    return threshold
 
 
 def _prompt_diagnostic(
@@ -149,7 +156,7 @@ def main_user_prompt() -> int:
     if not prompt.strip():
         return 0
 
-    threshold = float(os.environ.get("PII_GUARD_THRESHOLD", "0.7"))
+    threshold = _inline_threshold()
     mode = os.environ.get("PII_GUARD_MODE", "block")
     hits = list(detect(prompt, min_score=threshold))
     if not hits:
@@ -202,6 +209,10 @@ _KNOWN_LOCAL_TOOLS = frozenset({
     "Skill",
 })
 
+_LLM_ORCHESTRATION_TOOLS = frozenset({
+    "Agent", "Task", "TaskCreate", "TaskUpdate",
+})
+
 # MCP plugin prefixes whose tools are trusted (local memory, no external egress).
 # WebFetch / WebSearch remain blocked — they are network-egress surfaces.
 _ALLOWED_MCP_PREFIXES = (
@@ -216,12 +227,27 @@ def _is_allowed_tool(tool: str) -> bool:
     return any(tool.startswith(prefix) for prefix in _ALLOWED_MCP_PREFIXES)
 
 
+def _iter_text_values(value: object) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        values: list[str] = []
+        for item in value.values():
+            values.extend(_iter_text_values(item))
+        return values
+    if isinstance(value, list):
+        values = []
+        for item in value:
+            values.extend(_iter_text_values(item))
+        return values
+    return []
+
+
 def main_pre_tool() -> int:
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):
-        sys.stderr.write("[PRE-TOOL-GUARD BLOQUEADO] reason=malformed_payload\n")
-        return 2
+        return 0
 
     tool = payload.get("tool_name", "")
     tool_input = payload.get("tool_input", {}) or {}
@@ -232,6 +258,17 @@ def main_pre_tool() -> int:
     # Add entries to _KNOWN_LOCAL_TOOLS or _ALLOWED_MCP_PREFIXES to allow more.
     if not _is_allowed_tool(tool):
         return _deny_pre_tool(reason_code="unknown_tool", category="unknown_tool")
+
+    if tool in _LLM_ORCHESTRATION_TOOLS:
+        threshold = _inline_threshold()
+        for text in _iter_text_values(tool_input):
+            if detect(text, min_score=threshold):
+                return _deny_pre_tool(
+                    reason_code="inline_pii",
+                    category="llm_orchestration",
+                    command_count=1,
+                )
+        return 0
 
     if tool in ("Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "NotebookRead"):
         ok, reason_code = check_path_tool(tool_input)

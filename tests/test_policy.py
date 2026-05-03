@@ -25,6 +25,10 @@ def test_classify_path_detects_protected_strings_without_file_io() -> None:
         r"data_sensivel\synthetic.csv": ("protected_data", "protected_path_data"),
         "../cooperados/lista.csv": ("protected_data", "protected_path_data"),
         "exports/dump_2025_05.txt": ("dump_file", "protected_path_dump"),
+        "exports/dump_2025_05": ("dump_file", "protected_path_dump"),
+        "dump_*": ("dump_file", "protected_path_dump"),
+        "*.cooperados.csv": ("protected_data", "protected_path_data"),
+        "*.cpf.txt": ("protected_data", "protected_path_data"),
         "config/credenciais_fake.json": ("credentials_file", "protected_path_credentials"),
         "tmp/segredo-local.txt": ("secret_filename", "protected_path_secret_name"),
     }

@@ -14,7 +14,9 @@ from .masking import MaskResult
 SENSITIVE_GLOBS = [
     re.compile(r"(?:^|[\\/])data_sensivel(?:[\\/]|$)", re.IGNORECASE),
     re.compile(r"(?:^|[\\/])cooperados(?:[\\/]|$)", re.IGNORECASE),
-    re.compile(r"(?:^|[\\/])dump_[\w\-]+\.[a-z]+$", re.IGNORECASE),
+    re.compile(r"(?:^|[\\/])?dump_[\w\-*?\[\]]+(?:\.[a-z0-9*?\[\]]+)?$", re.IGNORECASE),
+    re.compile(r"(?:^|[\\/])?[^\\/]*cooperados\.csv$", re.IGNORECASE),
+    re.compile(r"(?:^|[\\/])?[^\\/]*\.cpf\.txt$", re.IGNORECASE),
     re.compile(r"(?:^|[\\/])\.env(?:\.[\w\-]+)?$", re.IGNORECASE),
     re.compile(r"(?:^|[\\/])(?:credentials?|credenciais?)[\w\-.]*", re.IGNORECASE),
     re.compile(r"(?:^|[\\/])(?:secret|segredo|token|key)[\w\-.]*", re.IGNORECASE),
@@ -106,6 +108,11 @@ CLIPBOARD_CMDS = re.compile(
     re.IGNORECASE,
 )
 
+LIST_CMDS = re.compile(
+    r"\b(?:ls|dir|Get-ChildItem|gci|Get-Item|gi)\b",
+    re.IGNORECASE,
+)
+
 
 def _normalize_path(path: str) -> str:
     value = str(path or "").strip().strip("\"'")
@@ -134,8 +141,10 @@ def classify_path(path: str) -> PathClassification:
         return PathClassification(True, "env_file", "protected_path_env")
     if re.search(r"(?:^|/)data_sensivel(?:/|$)", p) or re.search(r"(?:^|/)cooperados(?:/|$)", p):
         return PathClassification(True, "protected_data", "protected_path_data")
-    if re.match(r"dump_[\w\-]+\.[a-z0-9]+$", name):
+    if re.match(r"dump_[\w\-*?\[\]]+(?:\.[a-z0-9*?\[\]]+)?$", name):
         return PathClassification(True, "dump_file", "protected_path_dump")
+    if re.match(r"[^/]*cooperados\.csv$", name) or name.endswith(".cpf.txt"):
+        return PathClassification(True, "protected_data", "protected_path_data")
     # Word-boundary patterns: tokens must appear as a discrete word in the
     # filename (separated by ., _, -, or at start/end of stem) to avoid
     # false-positives on names like tokenizer.py, keychain.md, secretary.txt.
@@ -154,7 +163,7 @@ def _command_has_protected_path(command: str) -> bool:
     if any(rx.search(command) for rx in SENSITIVE_GLOBS):
         return True
 
-    for match in re.finditer(r"""["']?([A-Za-z]:[^\s"'`|<>;&]+|[.\w\-\\/]+)["']?""", command):
+    for match in re.finditer(r"""["']?([A-Za-z]:[^\s"'`|<>;&]+|[.\w\-\\/*?\[\]]+)["']?""", command):
         token = match.group(1).strip()
         if token and classify_path(token).is_protected:
             return True
@@ -174,9 +183,11 @@ def classify_command(command: str) -> CommandClassification:
             ("encoding", "protected_command_encoding", ENCODING_CMDS),
             ("copy", "protected_command_copy", COPY_CMDS),
             ("read", "protected_command_read", READ_CMDS),
+            ("list", "protected_command_list", LIST_CMDS),
         ):
             if pattern.search(value):
                 return CommandClassification(True, category, reason_code)
+        return CommandClassification(True, "protected_path", "protected_command_path")
 
     if detect(value):
         return CommandClassification(True, "inline_pii", "inline_pii")
