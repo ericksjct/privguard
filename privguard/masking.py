@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+import re
 from typing import Sequence
 
 from .detection import Hit, detect
@@ -16,6 +17,11 @@ class MaskResult:
     verification_status: str
     reason_codes: tuple[str, ...]
     hits: tuple[Hit, ...]
+
+
+PLACEHOLDER_ASSIGNMENT = re.compile(
+    r"^\s*[A-Za-z_][\w-]*\s*[:=]\s*<[A-Z][A-Z0-9_]*>\s*$"
+)
 
 
 def _replace_spans(text: str, hits: Sequence[Hit]) -> str:
@@ -41,6 +47,10 @@ def _normalize_hits(hits: Sequence[Hit]) -> tuple[Hit, ...]:
     return tuple(kept)
 
 
+def _is_safe_placeholder_residual(value: str) -> bool:
+    return bool(PLACEHOLDER_ASSIGNMENT.fullmatch(value))
+
+
 def verify_mask(
     original_text: str,
     masked_text: str,
@@ -56,7 +66,10 @@ def verify_mask(
         if hit.value and hit.value in masked_text:
             reason_codes.append("original_value_remaining")
 
-    residual_hits = detect(masked_text, min_score=min_score)
+    residual_hits = [
+        hit for hit in detect(masked_text, min_score=min_score)
+        if not _is_safe_placeholder_residual(hit.value)
+    ]
     if residual_hits:
         reason_codes.append("residual_detection")
 

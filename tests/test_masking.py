@@ -63,6 +63,27 @@ def test_verify_mask_fails_on_residual_detection() -> None:
     assert "residual_detection" in reason_codes
 
 
+def test_verify_mask_allows_placeholder_only_secret_assignment() -> None:
+    text = "token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+    result = mask_text(text)
+
+    assert result.verified is True
+    assert result.text == "token=<TOKEN>"
+    assert "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890" not in result.text
+
+
+def test_verify_mask_rejects_placeholder_assignment_with_secret_suffix() -> None:
+    original = "token=ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+    hits = detection.detect(original)
+    masked = "token=<TOKEN>ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+    verified, reason_codes = verify_mask(original, masked, hits)
+
+    assert verified is False
+    assert "original_value_remaining" in reason_codes
+
+
 def test_mask_result_for_clean_text_is_verified_and_unchanged() -> None:
     result = mask_text("texto publico sem identificadores")
 

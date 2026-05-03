@@ -87,6 +87,38 @@ def test_policy_check_allows_verified_masked_external_json(
     assert raw_cpf not in out
 
 
+def test_mask_allows_placeholder_only_secret_assignment(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    raw_secret = "ghp_ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+    assert main(["mask", f"token={raw_secret}"]) == 0
+
+    out = capsys.readouterr().out
+    assert "token=<TOKEN>" in out
+    assert raw_secret not in out
+
+
+def test_policy_check_allows_masked_external_secret_assignment_json(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    raw_secret = "sk-test-abcdefghijklmnopqrstuvwxyz"
+
+    assert main([
+        "policy-check",
+        "--json",
+        "--masked",
+        "--capability",
+        "external",
+        f"api_key={raw_secret}",
+    ]) == 0
+
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    assert payload["decision"]["allow"] is True
+    assert raw_secret not in out
+
+
 def test_policy_check_blocks_protected_path_without_echoing_path(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
