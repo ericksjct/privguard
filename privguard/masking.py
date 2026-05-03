@@ -59,9 +59,6 @@ def verify_mask(
 ) -> tuple[bool, tuple[str, ...]]:
     reason_codes: list[str] = []
 
-    if not hits:
-        return True, ("no_sensitive_hits",)
-
     for hit in hits:
         if hit.value and hit.value in masked_text:
             reason_codes.append("original_value_remaining")
@@ -76,6 +73,8 @@ def verify_mask(
     if reason_codes:
         return False, tuple(dict.fromkeys(reason_codes))
 
+    if not hits:
+        return True, ("no_sensitive_hits",)
     return True, ("mask_verified",)
 
 

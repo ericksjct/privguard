@@ -93,6 +93,35 @@ def test_mask_result_for_clean_text_is_verified_and_unchanged() -> None:
     assert result.reason_codes == ("no_sensitive_hits",)
 
 
+def test_mask_text_does_not_fail_open_when_caller_passes_empty_hits() -> None:
+    text = "CPF 123.456.789-09"
+
+    result = mask_text(text, hits=[])
+
+    assert result.verified is False
+    assert result.verification_status == "failed"
+    assert "residual_detection" in result.reason_codes
+    assert result.text == text
+
+
+def test_verify_mask_runs_residual_detection_when_hits_empty() -> None:
+    text = "CPF 123.456.789-09"
+
+    verified, reason_codes = verify_mask(text, text, [])
+
+    assert verified is False
+    assert "residual_detection" in reason_codes
+
+
+def test_verify_mask_returns_no_sensitive_hits_when_truly_clean() -> None:
+    text = "texto publico sem identificadores"
+
+    verified, reason_codes = verify_mask(text, text, [])
+
+    assert verified is True
+    assert reason_codes == ("no_sensitive_hits",)
+
+
 def test_diagnostics_do_not_expose_raw_values_or_masked_payload() -> None:
     raw_cpf = "123.456.789-09"
     text = f"CPF {raw_cpf}"
