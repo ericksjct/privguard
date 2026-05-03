@@ -139,7 +139,7 @@ def check_bash(tool_input: dict) -> tuple[bool, str]:
     if not command:
         return True, ""
 
-    classification = classify_command(command)
+    classification = classify_command(command, min_score=_inline_threshold())
     if classification.is_blocked:
         return False, classification.reason_code
 
@@ -284,7 +284,7 @@ def main_pre_tool() -> int:
 
     if tool in ("Bash", "PowerShell"):
         command = str(tool_input.get("command", "") or "")
-        classification = classify_command(command)
+        classification = classify_command(command, min_score=_inline_threshold())
         if classification.is_blocked:
             return _deny_pre_tool(
                 reason_code=classification.reason_code,

@@ -170,7 +170,7 @@ def _command_has_protected_path(command: str) -> bool:
     return False
 
 
-def classify_command(command: str) -> CommandClassification:
+def classify_command(command: str, min_score: float = 0.6) -> CommandClassification:
     value = str(command or "")
     if not value.strip():
         return CommandClassification(False, "empty", "command_empty")
@@ -189,7 +189,7 @@ def classify_command(command: str) -> CommandClassification:
                 return CommandClassification(True, category, reason_code)
         return CommandClassification(True, "protected_path", "protected_command_path")
 
-    if detect(value):
+    if detect(value, min_score=min_score):
         return CommandClassification(True, "inline_pii", "inline_pii")
 
     return CommandClassification(False, "unprotected", "command_unprotected")
