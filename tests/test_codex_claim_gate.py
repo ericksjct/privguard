@@ -8,7 +8,11 @@ row with:
 
     row.automatic_masking is True
     row.surface_capability == SurfaceCapability.REWRITE_CAPABLE
-    "verified outbound payload replacement" in " ".join(row.evidence + row.gaps)
+    any("verified outbound payload replacement" in item for item in row.evidence)
+
+The proof phrase must appear in ``row.evidence`` only -- ``row.gaps`` documents
+missing/uncertain proof (including negated phrasing) and must not be allowed to
+unlock the gate.
 
 Because no such row exists in Phase 04, any unsupported positive masking claim
 must fail.  Negated/disclaimer wording is explicitly allowed.
@@ -134,14 +138,20 @@ def _has_verified_codex_masking_proof() -> bool:
     A row qualifies as verified proof when:
       - row.automatic_masking is True
       - row.surface_capability == SurfaceCapability.REWRITE_CAPABLE
-      - "verified outbound payload replacement" appears in the combined
-        evidence + gaps string
+      - "verified outbound payload replacement" appears in at least one
+        ``row.evidence`` entry
+
+    The proof phrase MUST appear in ``row.evidence`` only.  Wording in
+    ``row.gaps`` (which exists to document missing/uncertain proof, including
+    negated phrasing such as ``"verified outbound payload replacement not
+    proven"``) MUST NOT unlock the gate, because that would let unsupported
+    automatic masking claims slip through CDX-03.
     """
     for row in CODEX_COMPATIBILITY:
         if (
             row.automatic_masking is True
             and row.surface_capability == SurfaceCapability.REWRITE_CAPABLE
-            and "verified outbound payload replacement" in " ".join(row.evidence + row.gaps)
+            and any("verified outbound payload replacement" in item for item in row.evidence)
         ):
             return True
     return False
@@ -300,6 +310,82 @@ def test_positive_claim_without_matrix_proof_is_flagged() -> None:
     assert len(violations) >= 1, (
         "Expected at least one violation for synthetic positive masking claim, got none"
     )
+
+
+def test_proof_phrase_in_gaps_only_does_not_unlock_gate() -> None:
+    """CDX-03 regression (WR-01): proof phrase in ``row.gaps`` must NOT unlock the gate.
+
+    A future regression where someone moved the proof phrase into ``row.gaps`` --
+    or wrote a negated form such as ``"verified outbound payload replacement not
+    proven"`` in gaps -- would falsely satisfy the masking-proof gate if the
+    function inspected gaps.  This test constructs a synthetic row exhibiting
+    exactly that pattern and asserts the gate stays closed.
+    """
+    import sys
+    from privguard.codex import CodexCompatibilityRow
+
+    synthetic_row = CodexCompatibilityRow(
+        surface="Synthetic gaps-only proof row",
+        support_label="unsupported",
+        surface_capability=SurfaceCapability.REWRITE_CAPABLE,
+        privacy_action="do_not_claim_masking",
+        evidence=("synthetic non-proof evidence string",),
+        tested_version_or_docs_date="synthetic",
+        automatic_masking=True,
+        gaps=(
+            "verified outbound payload replacement not proven",
+        ),
+    )
+
+    # _has_verified_codex_masking_proof reads CODEX_COMPATIBILITY from the
+    # current module's globals (it was imported at module level via
+    # ``from privguard.codex import CODEX_COMPATIBILITY``).  Monkey-patch that
+    # binding here, then restore.
+    gate_module = sys.modules[__name__]
+    original = gate_module.CODEX_COMPATIBILITY
+    try:
+        gate_module.CODEX_COMPATIBILITY = original + (synthetic_row,)
+        assert _has_verified_codex_masking_proof() is False, (
+            "Gate must not unlock when the proof phrase appears only in row.gaps"
+        )
+    finally:
+        gate_module.CODEX_COMPATIBILITY = original
+
+
+def test_proof_phrase_in_evidence_unlocks_gate() -> None:
+    """CDX-03 regression (WR-01): proof phrase in ``row.evidence`` DOES unlock the gate.
+
+    Sanity-checks the positive direction so the WR-01 fix does not accidentally
+    break the legitimate path: when a row truly carries the proof phrase in
+    ``row.evidence`` and is rewrite-capable with automatic_masking=True, the
+    gate must return True.
+    """
+    import sys
+    from privguard.codex import CodexCompatibilityRow
+
+    synthetic_row = CodexCompatibilityRow(
+        surface="Synthetic evidence-backed proof row",
+        support_label="unsupported",
+        surface_capability=SurfaceCapability.REWRITE_CAPABLE,
+        privacy_action="do_not_claim_masking",
+        evidence=(
+            "synthetic verified outbound payload replacement evidence entry",
+        ),
+        tested_version_or_docs_date="synthetic",
+        automatic_masking=True,
+        gaps=("synthetic non-proof gap string",),
+    )
+
+    gate_module = sys.modules[__name__]
+    original = gate_module.CODEX_COMPATIBILITY
+    try:
+        gate_module.CODEX_COMPATIBILITY = original + (synthetic_row,)
+        assert _has_verified_codex_masking_proof() is True, (
+            "Gate must unlock when the proof phrase appears in row.evidence "
+            "for a rewrite-capable automatic_masking=True row"
+        )
+    finally:
+        gate_module.CODEX_COMPATIBILITY = original
 
 
 def test_safe_file_scan_excludes_protected_paths() -> None:
