@@ -25,7 +25,7 @@ No sensitive Brazilian or company data should be sent to external LLM providers 
 
 ### Active
 
-- [ ] Gather Codex compatibility evidence and define which interception/rewrite surfaces can be supported safely
+- ✓ Gather Codex compatibility evidence and define which interception/rewrite surfaces can be supported safely — Validated in Phase 4: Codex Compatibility Evidence
 
 ### Out of Scope
 
@@ -85,4 +85,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-03 after Phase 3 completion*
+*Last updated: 2026-05-04 after Phase 4 completion*
