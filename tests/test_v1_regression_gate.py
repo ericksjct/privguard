@@ -83,7 +83,14 @@ FORBIDDEN_OUTPUT: tuple[str, ...] = (
     PROMPT_TEXT,
     COMMAND_TEXT,
     "sk-test-",
-    "redacted=",
+    # IN-02: ``redacted=True`` is the specific serializer pattern guarded
+    # against here — emitted only if a future hooks/diagnostics serializer
+    # echoed a redaction-state metadata field whose value carries the raw
+    # payload alongside it. The narrower ``redacted=True`` sentinel avoids
+    # false positives from unrelated keys such as ``not_redacted=False`` or
+    # ``already_redacted=true`` that could share the broader ``redacted=``
+    # substring while still flagging the leakage pattern of concern.
+    "redacted=True",
     "<BR_CPF>",
     "<TOKEN>",
     "<BR_CNPJ>",
