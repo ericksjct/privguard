@@ -548,20 +548,19 @@ def test_TEST_06_codex_claim_scan_reports_only_file_path_and_pattern() -> None:
 
     Failure message reports only file path and pattern name — no raw line content
     is included to avoid leaking synthetic fixture values.
+
+    Delegates the forbidden-pattern set and detection logic to
+    ``test_codex_claim_gate._find_unsupported_claims`` so the regression gate
+    cannot diverge from the CDX-03 claim gate (WR-02).
     """
-    import re as _re
-
-    forbidden_phrases = (
-        "codex masks prompts automatically",
-        "codex automatic masking",
-        "automatic codex masking",
-    )
-    allowed_negations = (
-        "automatic codex masking is unsupported until verified outbound payload replacement is proven",
-        "no automatic codex masking claim",
+    # Delegate to the shared helper to avoid pattern-list divergence between
+    # this regression gate and the CDX-03 claim gate.
+    from test_codex_claim_gate import (
+        _find_unsupported_claims,
+        _safe_text_files as _cg_safe_files,
     )
 
-    files = _safe_text_files()
+    files = _cg_safe_files(_ROOT)
     assert files, (
         "Safe file scan returned no files — check working directory and glob patterns"
     )
@@ -572,54 +571,8 @@ def test_TEST_06_codex_claim_scan_reports_only_file_path_and_pattern() -> None:
             content = target.read_text(encoding="utf-8", errors="replace")
         except OSError:
             continue
-        content_lower = content.lower()
-        lines_list = content_lower.splitlines()
-
-        for phrase in forbidden_phrases:
-            start = 0
-            while True:
-                idx = content_lower.find(phrase, start)
-                if idx == -1:
-                    break
-
-                # Find the line number for this match
-                line_num = content_lower.count("\n", 0, idx)
-
-                # Build single-line context (whitespace collapsed)
-                line_start = content_lower.rfind("\n", 0, idx) + 1
-                line_end = content_lower.find("\n", idx)
-                if line_end == -1:
-                    line_end = len(content_lower)
-                single_line = _re.sub(r"\s+", " ", content_lower[line_start:line_end])
-
-                # Build two-line window (current + next line, whitespace collapsed)
-                # Handles disclaimers split across two lines like:
-                #   "**automatic Codex masking\nis unsupported until..."
-                if line_num + 1 < len(lines_list):
-                    raw_window = lines_list[line_num] + " " + lines_list[line_num + 1]
-                    two_line = _re.sub(r"\s+", " ", raw_window)
-                else:
-                    two_line = single_line
-
-                # Allow if either window contains a negation
-                allowed_single = any(neg in single_line for neg in allowed_negations)
-                allowed_two = any(neg in two_line for neg in allowed_negations)
-
-                # Allow surface-name table rows labeled unsupported
-                is_surface_row = (
-                    "automatic codex masking rewrite" in single_line
-                    and (
-                        "unsupported" in single_line
-                        or single_line.strip().startswith("#")
-                        or '"automatic codex masking rewrite"' in single_line
-                        or "'automatic codex masking rewrite'" in single_line
-                    )
-                )
-
-                if not (allowed_single or allowed_two or is_surface_row):
-                    violations.append((target, phrase))
-
-                start = idx + 1
+        for pattern in _find_unsupported_claims(content):
+            violations.append((target, pattern))
 
     if violations:
         # Failure message: file path + pattern name only (no raw line content)
