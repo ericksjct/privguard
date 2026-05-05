@@ -562,6 +562,9 @@ def test_TEST_06_codex_claim_scan_reports_only_file_path_and_pattern() -> None:
     )
 
     files = _safe_text_files()
+    assert files, (
+        "Safe file scan returned no files — check working directory and glob patterns"
+    )
     violations: list[tuple[pathlib.Path, str]] = []
 
     for target in files:
