@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Package Foundation** - Developers can install and run a reusable local package/CLI without demo scripts becoming production behavior.
 - [x] **Phase 2: Privacy Core** - Detection, masking, path classification, policy decisions, and safe diagnostics share one fail-closed contract.
 - [x] **Phase 3: Claude Enforcement** - Claude Code prompt and tool hooks enforce strict outbound privacy and protected-path blocking with sanitized output.
-- [ ] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
+- [x] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
 - [ ] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
 
 ## Phase Details
@@ -123,5 +123,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 1. Package Foundation | 4/4 | Complete | 2026-05-02 |
 | 2. Privacy Core | 4/4 | Complete | 2026-05-03 |
 | 3. Claude Enforcement | 4/4 | Complete | 2026-05-03 |
-| 4. Codex Compatibility Evidence | 0/TBD | Not started | - |
+| 4. Codex Compatibility Evidence | 2/2 | Complete | 2026-05-04 |
 | 5. Synthetic Regression Gate | 0/TBD | Not started | - |
