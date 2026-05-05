@@ -176,6 +176,10 @@ def _find_unsupported_claims(text: str) -> list[str]:
     4. The line contains the surface-name-as-table-row pattern from the Markdown
        matrix (``automatic codex masking rewrite`` + ``unsupported`` on same line).
     """
+    # IN-01: ``re`` is imported at module level (line 26); we alias it locally
+    # here once outside the per-pattern loop to keep the original ``_re`` name
+    # used inside this function while avoiding an in-loop import statement.
+    _re = re
     text_lower = text.lower()
     lines = text_lower.splitlines()
     violations: list[str] = []
@@ -200,7 +204,6 @@ def _find_unsupported_claims(text: str) -> list[str]:
             # Build two-line window (current + next line) with internal whitespace
             # collapsed to single spaces so that indented continuation lines
             # (e.g. "    is unsupported until...") join cleanly.
-            import re as _re
             if line_num + 1 < len(lines):
                 raw_window = lines[line_num] + " " + lines[line_num + 1]
                 two_line_window = _re.sub(r"\s+", " ", raw_window)
