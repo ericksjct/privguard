@@ -205,7 +205,12 @@ def _find_unsupported_claims(text: str) -> list[str]:
                 raw_window = lines[line_num] + " " + lines[line_num + 1]
                 two_line_window = _re.sub(r"\s+", " ", raw_window)
             else:
-                two_line_window = lines[line_num] if line_num < len(lines) else single_line
+                # Fallback for last-line matches: apply the same whitespace
+                # normalization used in the non-fallback branch (WR-03) so an
+                # allowed disclaimer with extra internal whitespace on the very
+                # last line is not falsely flagged as a violation.
+                raw_fallback = lines[line_num] if line_num < len(lines) else single_line
+                two_line_window = _re.sub(r"\s+", " ", raw_fallback)
 
             # Also build a whitespace-collapsed version of the single line
             single_line_norm = _re.sub(r"\s+", " ", single_line)
