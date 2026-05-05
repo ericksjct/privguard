@@ -291,3 +291,160 @@ def test_TEST_04_protected_path_normalization_is_project_root_traceable() -> Non
     proj_result = classify_path(proj_root_path)
     assert proj_result.is_protected is True
     assert proj_result.reason_code == "protected_path_data"
+
+
+# ===========================================================================
+# TEST-02: Cross-surface forbidden-output hygiene
+# ===========================================================================
+
+
+def test_TEST_02_cli_scan_json_output_is_sanitized(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-02: CLI scan --json output must not echo raw sensitive fixture values."""
+    assert cli_main(["scan", "--json", f"CPF {SYNTH_CPF}"]) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    assert payload["counts"]["BR_CPF"] == 1
+    _assert_forbidden_values_absent(captured.out + captured.err)
+
+
+def test_TEST_02_cli_mask_text_output_sanitized_in_json(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-02: CLI mask output must not echo raw CPF in JSON surfaces."""
+    assert cli_main(["mask", "--json", f"CPF {SYNTH_CPF}"]) == 0
+    captured = capsys.readouterr()
+    assert captured.err == ""
+    payload = json.loads(captured.out)
+    # JSON diagnostics must not contain raw value or masked payload text
+    json_str = json.dumps(payload)
+    assert SYNTH_CPF not in json_str
+    # Placeholders are allowed only in human mask output, not JSON diagnostics
+    assert "<BR_CPF>" not in json_str
+
+
+def test_TEST_02_diagnostics_serialization_excludes_raw_values() -> None:
+    """TEST-02: diagnostics to_json/format_text must not expose raw sensitive values."""
+    text = f"CPF {SYNTH_CPF} CNPJ {SYNTH_CNPJ}"
+    report = analyze_text(text)
+    result = mask_text(text)
+
+    rendered_report = to_json(report)
+    rendered_mask = to_json(result)
+    rendered_text = format_text(result)
+
+    # Raw values must not appear in any serialized form
+    assert SYNTH_CPF not in rendered_report
+    assert SYNTH_CPF not in rendered_mask
+    assert SYNTH_CNPJ not in rendered_report
+    assert SYNTH_CNPJ not in rendered_mask
+    # Masked placeholders must not appear in JSON diagnostics either
+    assert "<BR_CPF>" not in rendered_mask
+    assert "<BR_CNPJ>" not in rendered_mask
+    assert "<BR_CPF>" not in rendered_text
+
+    # Metadata is still present
+    parsed = json.loads(rendered_mask)
+    assert parsed["verified"] is True
+    assert parsed["hit_count"] >= 1
+
+
+def test_TEST_02_masked_metadata_excludes_payload_text() -> None:
+    """TEST-02: MaskResult metadata serialization must not echo masked payload text."""
+    text = f"token api_key={FAKE_SECRET_SK}"
+    result = mask_text(text)
+    assert result.verified is True
+
+    serialized = to_json(result)
+    # Raw secret must not appear
+    assert FAKE_SECRET_SK not in serialized
+    # Masked placeholder must not appear in JSON diagnostics
+    assert "<TOKEN>" not in serialized
+    assert "sk-test-" not in serialized
+
+
+# ===========================================================================
+# TEST-05: Claude hook JSON/mode/malformed/exit-code representative cases
+# ===========================================================================
+
+
+def test_TEST_05_user_prompt_hook_blocks_pii_with_sanitized_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-05: Prompt hook blocks synthetic PII (exit 2), output is sanitized."""
+    assert _run_user_prompt(monkeypatch, {"prompt": PROMPT_TEXT}) == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "UserPromptSubmit" in output or "BLOQUEADO" in output
+    assert "action=block" in output
+    assert "BR_CPF" in output
+    _assert_forbidden_values_absent(output)
+
+
+def test_TEST_05_pre_tool_hook_blocks_protected_path_with_sanitized_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-05: PreToolUse hook blocks a protected-path Read call (exit 2), output is sanitized."""
+    payload = {"tool_name": "Read", "tool_input": {"file_path": PROT_DATA}}
+    assert _run_pre_tool(monkeypatch, payload) == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "PreToolUse" in output or "action=block" in output
+    assert "protected_path" in output
+    _assert_forbidden_values_absent(output)
+
+
+def test_TEST_05_malformed_json_hook_fails_open_with_no_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-05: Malformed JSON input to both hooks fails open (exit 0) with no output."""
+    malformed = '{"prompt": "CPF incomplete'
+    assert _run_user_prompt(monkeypatch, malformed) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+    malformed_tool = '{"tool_name": "Read", "tool_input": {"file_path": '
+    assert _run_pre_tool(monkeypatch, malformed_tool) == 0
+    captured = capsys.readouterr()
+    assert captured.out + captured.err == ""
+
+
+def test_TEST_05_non_blocking_prompt_modes_are_labeled_non_protective(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-05: warn and scrub modes are labeled non-protective and output is sanitized."""
+    for mode in ("warn", "scrub"):
+        exit_code = _run_user_prompt(monkeypatch, {"prompt": PROMPT_TEXT}, mode=mode)
+        captured = capsys.readouterr()
+        output = captured.out + captured.err
+        assert exit_code in {0, 2}
+        assert "local_development_non_protective" in output
+        assert "BR_CPF" in output
+        _assert_forbidden_values_absent(output)
+
+
+def test_TEST_05_invalid_threshold_uses_default_without_echo(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """TEST-05: Invalid threshold values fall back to default without echoing prompt text."""
+    for threshold in ("nan", "inf", "-1", "2", "not-a-number"):
+        exit_code = _run_user_prompt(
+            monkeypatch,
+            {"prompt": PROMPT_TEXT},
+            threshold=threshold,
+        )
+        captured = capsys.readouterr()
+        output = captured.out + captured.err
+        assert exit_code == 2, (
+            f"Expected exit 2 (PII blocked) with threshold={threshold!r}; got {exit_code}"
+        )
+        assert "reason=pii_detected" in output
+        _assert_forbidden_values_absent(output)
