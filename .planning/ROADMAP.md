@@ -97,10 +97,10 @@ Plans:
   3. Developer can see tests pass for valid and invalid Brazilian identifiers, overlap handling, false-positive lookalikes, and Windows path normalization cases.
   4. Developer can see Claude hook tests cover prompt/tool payloads, malformed input, exit codes, policy modes, and sanitized output.
   5. Developer can see fail-closed tests pass when detection, masking, configuration, or client capability validation fails.
-**Plans**: TBD
+**Plans**: 1 plans
 
 Plans:
-- [ ] 05-01: TBD
+- [x] 05-01-PLAN.md — Create the pytest-native v1 synthetic regression gate for TEST-01 through TEST-06.
 
 ## Backlog
 
