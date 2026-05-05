@@ -94,9 +94,13 @@ def _is_excluded(path: pathlib.Path) -> bool:
     name = path.name
     if name == ".env" or name.startswith(".env."):
         return True
-    # Exclude Codex-specific test files that reference forbidden strings as
-    # test fixtures or assertion strings (not real claims).
-    if name in {"test_codex_claim_gate.py", "test_codex_compatibility.py"}:
+    # Exclude test files that reference forbidden strings as test fixtures or
+    # assertion strings (not real claims).
+    if name in {
+        "test_codex_claim_gate.py",
+        "test_codex_compatibility.py",
+        "test_v1_regression_gate.py",
+    }:
         return True
     return False
 

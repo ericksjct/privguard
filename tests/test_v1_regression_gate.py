@@ -126,6 +126,14 @@ def _is_excluded(path: pathlib.Path) -> bool:
     name = path.name
     if name == ".env" or name.startswith(".env."):
         return True
+    # Exclude test files that contain claim/fixture strings as test data
+    # (not real claims) — same exclusion policy as test_codex_claim_gate.py
+    if name in {
+        "test_codex_claim_gate.py",
+        "test_codex_compatibility.py",
+        "test_v1_regression_gate.py",
+    }:
+        return True
     return False
 
 
@@ -448,3 +456,171 @@ def test_TEST_05_invalid_threshold_uses_default_without_echo(
         )
         assert "reason=pii_detected" in output
         _assert_forbidden_values_absent(output)
+
+
+# ===========================================================================
+# TEST-06: Fail-closed failure paths
+# ===========================================================================
+
+
+def test_TEST_06_unverified_mask_never_allows_external_submission() -> None:
+    """TEST-06: A MaskResult with verified=False must never allow external submission."""
+    raw_text = f"CPF {SYNTH_CPF}"
+    hits = detect(raw_text)
+    result = mask_text(raw_text, hits=hits)
+
+    # Construct a failed mask result (verified=False) using the same dataclass type
+    failed = type(result)(
+        text=raw_text,
+        changed=False,
+        verified=False,
+        verification_status="failed",
+        reason_codes=("original_value_remaining",),
+        hits=tuple(hits),
+    )
+
+    decision = decide_policy(SurfaceCapability.REWRITE_CAPABLE, hits=hits, mask_result=failed)
+    assert decision.allow is False
+    assert decision.action != PolicyAction.ALLOW
+    assert "mask_unverified" in decision.reason_codes
+
+
+def test_TEST_06_fail_closed_for_all_non_rewrite_capable_surfaces() -> None:
+    """TEST-06: UNKNOWN/EXTERNAL/UNSUPPORTED/OBSERVE_ONLY/BLOCK_ONLY fail closed with sensitive hits."""
+    hits = detect(f"CPF {SYNTH_CPF}")
+    assert hits, "Synthetic CPF must produce detection hits"
+
+    for capability in (
+        SurfaceCapability.UNKNOWN,
+        SurfaceCapability.EXTERNAL,
+        SurfaceCapability.UNSUPPORTED,
+        SurfaceCapability.OBSERVE_ONLY,
+        SurfaceCapability.BLOCK_ONLY,
+    ):
+        decision = decide_policy(capability, hits=list(hits))
+        assert decision.allow is False, (
+            f"Surface {capability!r} must not allow sensitive hits; got action={decision.action!r}"
+        )
+        assert decision.action in {PolicyAction.BLOCK, PolicyAction.PAUSE}, (
+            f"Surface {capability!r} must block or pause; got {decision.action!r}"
+        )
+
+
+def test_TEST_06_redact_failure_raises_sanitized_exception() -> None:
+    """TEST-02/TEST-06: redact() with empty hits raises ValueError with sanitized message."""
+    raw_text = f"CPF {SYNTH_CPF}"
+    # Passing empty hits list on sensitive text causes mask_text to produce an
+    # unverified result (residual_detection), which redact() must raise as ValueError.
+    with pytest.raises(ValueError) as exc_info:
+        redact(raw_text, hits=[])
+
+    exc_message = str(exc_info.value)
+    # Exception message must not contain the raw sensitive value
+    assert SYNTH_CPF not in exc_message, (
+        "Exception message must not echo the raw CPF value"
+    )
+    assert "sk-test-" not in exc_message
+    # Should contain a generic/sanitized reason, not a raw fixture
+    assert exc_message  # non-empty sanitized message
+
+
+def test_TEST_06_empty_mask_with_sensitive_text_fails_closed() -> None:
+    """TEST-06: mask_text() with explicitly empty hits on sensitive text is unverified."""
+    raw_text = f"CPF {SYNTH_CPF}"
+    result = mask_text(raw_text, hits=[])
+    # Must not be verified — passing no hits on PII-containing text is a failure mode
+    assert result.verified is False
+    assert result.verification_status == "failed"
+    assert "residual_detection" in result.reason_codes
+
+
+def test_TEST_06_codex_has_no_automatic_masking_rows() -> None:
+    """TEST-06: CODEX_COMPATIBILITY must not contain automatic_masking=True rows."""
+    masking_rows = [row for row in CODEX_COMPATIBILITY if row.automatic_masking]
+    assert not masking_rows, (
+        "Phase 04/05 matrix must not contain automatic_masking=True rows. Found: "
+        + ", ".join(r.surface for r in masking_rows)
+    )
+
+
+def test_TEST_06_codex_claim_scan_reports_only_file_path_and_pattern() -> None:
+    """TEST-06: Unsupported Codex masking claims must not appear in safe repo text.
+
+    Failure message reports only file path and pattern name — no raw line content
+    is included to avoid leaking synthetic fixture values.
+    """
+    import re as _re
+
+    forbidden_phrases = (
+        "codex masks prompts automatically",
+        "codex automatic masking",
+        "automatic codex masking",
+    )
+    allowed_negations = (
+        "automatic codex masking is unsupported until verified outbound payload replacement is proven",
+        "no automatic codex masking claim",
+    )
+
+    files = _safe_text_files()
+    violations: list[tuple[pathlib.Path, str]] = []
+
+    for target in files:
+        try:
+            content = target.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        content_lower = content.lower()
+        lines_list = content_lower.splitlines()
+
+        for phrase in forbidden_phrases:
+            start = 0
+            while True:
+                idx = content_lower.find(phrase, start)
+                if idx == -1:
+                    break
+
+                # Find the line number for this match
+                line_num = content_lower.count("\n", 0, idx)
+
+                # Build single-line context (whitespace collapsed)
+                line_start = content_lower.rfind("\n", 0, idx) + 1
+                line_end = content_lower.find("\n", idx)
+                if line_end == -1:
+                    line_end = len(content_lower)
+                single_line = _re.sub(r"\s+", " ", content_lower[line_start:line_end])
+
+                # Build two-line window (current + next line, whitespace collapsed)
+                # Handles disclaimers split across two lines like:
+                #   "**automatic Codex masking\nis unsupported until..."
+                if line_num + 1 < len(lines_list):
+                    raw_window = lines_list[line_num] + " " + lines_list[line_num + 1]
+                    two_line = _re.sub(r"\s+", " ", raw_window)
+                else:
+                    two_line = single_line
+
+                # Allow if either window contains a negation
+                allowed_single = any(neg in single_line for neg in allowed_negations)
+                allowed_two = any(neg in two_line for neg in allowed_negations)
+
+                # Allow surface-name table rows labeled unsupported
+                is_surface_row = (
+                    "automatic codex masking rewrite" in single_line
+                    and (
+                        "unsupported" in single_line
+                        or single_line.strip().startswith("#")
+                        or '"automatic codex masking rewrite"' in single_line
+                        or "'automatic codex masking rewrite'" in single_line
+                    )
+                )
+
+                if not (allowed_single or allowed_two or is_surface_row):
+                    violations.append((target, phrase))
+
+                start = idx + 1
+
+    if violations:
+        # Failure message: file path + pattern name only (no raw line content)
+        msg_lines = ["Unsupported Codex masking claims found:"]
+        for path, pattern in violations:
+            msg_lines.append(f"  {path}: matched pattern {pattern!r}")
+        pytest.fail("\n".join(msg_lines))
