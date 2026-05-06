@@ -17,6 +17,8 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Claude Enforcement** - Claude Code prompt and tool hooks enforce strict outbound privacy and protected-path blocking with sanitized output.
 - [x] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
 - [ ] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
+- [ ] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
+- [ ] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (EN + PT-BR) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 
 ## Phase Details
 
@@ -102,6 +104,38 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md — Create the pytest-native v1 synthetic regression gate for TEST-01 through TEST-06.
 
+### Phase 6: Milestone Cleanup
+**Goal**: v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (2026-05-06).
+**Depends on**: Phase 5
+**Requirements**: PKG-02 (wording), CDX-01, CDX-02, CDX-03 (status sync), TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06 (status sync)
+**Gap Closure**: Closes 11 tech-debt items from `.planning/v1.0-MILESTONE-AUDIT.md`
+**Success Criteria** (what must be TRUE):
+  1. REQUIREMENTS.md checkboxes and traceability table match VERIFICATION.md verdicts for every v1 requirement (CDX-01..03 and TEST-01..06 ticked `[x]` and `Complete`).
+  2. ROADMAP.md Phase 5 status, progress row, and Phase 1 success criteria use the canonical command name with no legacy `privacy-guard` drift.
+  3. Plan summary frontmatter exposes `requirements_completed:` for every plan that satisfied a v1 requirement (04-01 and 05-01 backfilled).
+  4. `privacy-guard` console-script alias is either installed and tested or removed; `pyproject.toml` and REQUIREMENTS.md PKG-02 text agree on the canonical name.
+  5. `privguard/__init__.py.__all__` re-exports the public Phase 03/04 surface (`classify_command`, `main_user_prompt`, `main_pre_tool`, `build_claude_doctor_report`, `CODEX_COMPATIBILITY`).
+  6. Python 3.14 presidio-extras gating is either documented in `pyproject.toml` or relaxed so `pip install privguard[full]` behavior on 3.14 is intentional rather than incidental.
+**Plans**: TBD plans
+
+Plans:
+- [ ] TBD (run `/gsd-plan-phase 6`)
+
+### Phase 7: Project README + Repo Hygiene
+**Goal**: First-time user can land in the repo, understand what privguard does and does not do, install it, and clean up after themselves — in either English or Portuguese.
+**Depends on**: Phase 6
+**Requirements**: DOC-01, MAINT-01
+**Success Criteria** (what must be TRUE):
+  1. User can read a top-level README in English (`README.md`) and Portuguese (`README.pt-BR.md`) that covers install, CLI usage, Claude Code hook setup, the Claude/Codex capabilities matrix, what privguard does *not* do, and the synthetic-fixture-only policy.
+  2. User can run a single cleanup command and remove pytest cache directories, build artifacts, and other declared temporary directories from the repo root without touching `.env`, `data_sensivel/`, `.planning/`, `.git/`, or any source directory.
+  3. Maintainer can add a new cleanup pattern by editing one list in `pyproject.toml` (`[tool.privguard.cleanup]`), without modifying the cleanup script.
+  4. Cleanup script runs as dry-run by default and requires an explicit `--apply` flag before deleting anything (matches privguard's fail-closed posture).
+  5. `.gitignore` covers every pattern declared as cleanup-eligible, so transient artifacts never reach commits even when cleanup hasn't been run.
+**Plans**: TBD plans
+
+Plans:
+- [ ] TBD (run `/gsd-plan-phase 7`)
+
 ## Backlog
 
 ### Phase 999.1: WebFetch Domain Allowlist (BACKLOG)
@@ -116,7 +150,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -125,3 +159,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5
 | 3. Claude Enforcement | 4/4 | Complete | 2026-05-03 |
 | 4. Codex Compatibility Evidence | 2/2 | Complete | 2026-05-04 |
 | 5. Synthetic Regression Gate | 0/TBD | Not started | - |
+| 6. Milestone Cleanup | 0/TBD | Not started | - |
+| 7. Project README + Repo Hygiene | 0/TBD | Not started | - |

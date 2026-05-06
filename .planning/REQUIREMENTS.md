@@ -60,6 +60,14 @@ Requirements for the initial release. Each maps to roadmap phases.
 - [ ] **TEST-05**: Tests cover Claude prompt and tool hook JSON payloads, malformed input, exit codes, policy modes, and sanitized output.
 - [ ] **TEST-06**: Tests cover fail-closed behavior when detection, masking, configuration, or client capability validation fails.
 
+### Documentation
+
+- [ ] **DOC-01**: Project includes a bilingual top-level README (English primary `README.md`, Portuguese secondary `README.pt-BR.md`) covering installation, CLI usage, Claude Code hook setup, the Claude/Codex capabilities matrix, what the guard does *not* do, and the synthetic-fixture-only policy.
+
+### Maintenance
+
+- [ ] **MAINT-01**: Repo includes a config-driven cleanup mechanism with patterns declared in `pyproject.toml` (`[tool.privguard.cleanup]`), a hard-coded protected list (`.env`, `data_sensivel/`, `.planning/`, `.git/`, source directories) the script can never delete, and a dry-run-by-default contract that requires an explicit `--apply` flag before deletion.
+
 ## v2 Requirements
 
 Deferred to future release. Tracked but not in current roadmap.
@@ -132,12 +140,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 5 | Pending |
 | TEST-05 | Phase 5 | Pending |
 | TEST-06 | Phase 5 | Pending |
+| DOC-01 | Phase 7 | Pending |
+| MAINT-01 | Phase 7 | Pending |
 
 **Coverage:**
-- v1 requirements: 32 total
-- Mapped to phases: 32
+- v1 requirements: 34 total
+- Mapped to phases: 34
 - Unmapped: 0
 
 ---
 *Requirements defined: 2026-05-01*
-*Last updated: 2026-05-03 after Phase 2 verification*
+*Last updated: 2026-05-06 after v1.0 milestone audit (added Phase 6 cleanup + Phase 7 README/hygiene scope, added DOC-01 and MAINT-01)*
