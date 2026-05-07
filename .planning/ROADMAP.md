@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Privacy Core** - Detection, masking, path classification, policy decisions, and safe diagnostics share one fail-closed contract.
 - [x] **Phase 3: Claude Enforcement** - Claude Code prompt and tool hooks enforce strict outbound privacy and protected-path blocking with sanitized output.
 - [x] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
-- [ ] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
+- [x] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
 - [ ] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
 - [ ] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (EN + PT-BR) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 
@@ -27,7 +27,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 **Depends on**: Nothing (first phase)
 **Requirements**: PKG-01, PKG-02, PKG-03, PKG-04
 **Success Criteria** (what must be TRUE):
-  1. Developer can install the project locally with a reproducible dependency manifest and run the `privacy-guard` command.
+  1. Developer can install the project locally with a reproducible dependency manifest and run the `privguard` command.
   2. Developer can run CLI diagnostics and local masking checks without invoking root-level demo scripts.
   3. Reusable detection, masking, policy, and adapter code is importable from package modules.
   4. Existing demos are clearly separated from production code and do not print raw sensitive data by default.
@@ -111,9 +111,9 @@ Plans:
 **Gap Closure**: Closes 11 tech-debt items from `.planning/v1.0-MILESTONE-AUDIT.md`
 **Success Criteria** (what must be TRUE):
   1. REQUIREMENTS.md checkboxes and traceability table match VERIFICATION.md verdicts for every v1 requirement (CDX-01..03 and TEST-01..06 ticked `[x]` and `Complete`).
-  2. ROADMAP.md Phase 5 status, progress row, and Phase 1 success criteria use the canonical command name with no legacy `privacy-guard` drift.
+  2. ROADMAP.md Phase 5 status, progress row, and Phase 1 success criteria use the canonical command name `privguard` with no legacy drift.
   3. Plan summary frontmatter exposes `requirements_completed:` for every plan that satisfied a v1 requirement (04-01 and 05-01 backfilled).
-  4. `privacy-guard` console-script alias is either installed and tested or removed; `pyproject.toml` and REQUIREMENTS.md PKG-02 text agree on the canonical name.
+  4. The legacy console-script alias is removed (Phase 1 D-01 locked the canonical name to `privguard`); `pyproject.toml` and REQUIREMENTS.md PKG-02 text agree on the canonical name.
   5. `privguard/__init__.py.__all__` re-exports the public Phase 03/04 surface (`classify_command`, `main_user_prompt`, `main_pre_tool`, `build_claude_doctor_report`, `CODEX_COMPATIBILITY`).
   6. Python 3.14 presidio-extras gating is either documented in `pyproject.toml` or relaxed so `pip install privguard[full]` behavior on 3.14 is intentional rather than incidental.
 **Plans**: TBD plans
@@ -158,6 +158,6 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 2. Privacy Core | 4/4 | Complete | 2026-05-03 |
 | 3. Claude Enforcement | 4/4 | Complete | 2026-05-03 |
 | 4. Codex Compatibility Evidence | 2/2 | Complete | 2026-05-04 |
-| 5. Synthetic Regression Gate | 0/TBD | Not started | - |
+| 5. Synthetic Regression Gate | 1/1 | Complete | 2026-05-05 |
 | 6. Milestone Cleanup | 0/TBD | Not started | - |
 | 7. Project README + Repo Hygiene | 0/TBD | Not started | - |
