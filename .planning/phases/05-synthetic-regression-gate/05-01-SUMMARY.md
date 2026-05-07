@@ -3,6 +3,7 @@ phase: 05-synthetic-regression-gate
 plan: 1
 subsystem: tests
 tags: [regression-gate, synthetic-fixtures, output-hygiene, fail-closed, pytest]
+requirements_completed: [TEST-01, TEST-02, TEST-03, TEST-04, TEST-05, TEST-06]
 dependency_graph:
   requires:
     - 04-02 (Codex compatibility matrix and claim gate)

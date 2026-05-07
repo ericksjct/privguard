@@ -29,7 +29,7 @@ key_decisions:
   - "Surface-name literals (e.g. surface='Automatic Codex masking rewrite') allowed in codex.py data fields — not a claim"
   - "Section-divider comments referencing surface name allowed in codex.py — not a claim"
   - "No weakening of FORBIDDEN_CLAIM_PATTERNS; only precise exemptions for negated/disclaimer/data contexts"
-requirements-completed: [CDX-03]
+requirements_completed: [CDX-03]
 
 # Metrics
 duration: ~9min
