@@ -8,6 +8,11 @@ version = "0.1.0"
 requires-python = ">=3.10"
 dependencies = []
 
+# NOTE (2026-05-06): presidio-analyzer, presidio-anonymizer, and spacy do not
+# yet support Python 3.14 upstream. Each is gated on `python_version < '3.14'`,
+# so `pip install privguard[full]` installs zero of those packages on Python
+# 3.14. The lightweight detection path in `privguard.detection` remains fully
+# functional. See docs/install.md for details.
 [project.optional-dependencies]
 full = [
     "presidio-analyzer==2.2.362; python_version < '3.14'",
@@ -17,7 +22,6 @@ full = [
 
 [project.scripts]
 privguard = "privguard.cli:main"
-privacy-guard = "privguard.cli:main"
 
 [tool.setuptools.packages.find]
 include = ["privguard"]
