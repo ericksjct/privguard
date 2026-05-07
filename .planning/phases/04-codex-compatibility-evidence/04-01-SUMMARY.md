@@ -3,6 +3,7 @@ phase: 04-codex-compatibility-evidence
 plan: "01"
 subsystem: codex-compatibility
 tags: [codex, compatibility-matrix, claim-prevention, documentation, tdd]
+requirements_completed: [CDX-01, CDX-02]
 dependency_graph:
   requires:
     - privguard/policy.py (SurfaceCapability, decide_policy)
