@@ -10,7 +10,7 @@ Requirements for the initial release. Each maps to roadmap phases.
 ### Packaging
 
 - [x] **PKG-01**: Developer can install the project as a local Python package with a reproducible dependency manifest.
-- [x] **PKG-02**: Developer can run a `privacy-guard` CLI entry point for diagnostics and local masking checks.
+- [x] **PKG-02**: Developer can run a `privguard` CLI entry point for diagnostics and local masking checks.
 - [x] **PKG-03**: Reusable detection, masking, policy, and adapter code lives in importable package modules instead of root-level demo scripts.
 - [x] **PKG-04**: Existing demos are separated from production code and do not print raw sensitive data by default.
 
@@ -47,18 +47,18 @@ Requirements for the initial release. Each maps to roadmap phases.
 
 ### Codex
 
-- [ ] **CDX-01**: Project documents the current Codex interception options and whether prompt/tool payloads can be blocked or rewritten before provider submission.
-- [ ] **CDX-02**: Project includes a compatibility matrix that marks Codex support as supported, experimental, block-only, or unsupported with evidence.
-- [ ] **CDX-03**: Guard does not claim automatic Codex masking until a tested integration proves raw payloads are replaced before submission.
+- [x] **CDX-01**: Project documents the current Codex interception options and whether prompt/tool payloads can be blocked or rewritten before provider submission.
+- [x] **CDX-02**: Project includes a compatibility matrix that marks Codex support as supported, experimental, block-only, or unsupported with evidence.
+- [x] **CDX-03**: Guard does not claim automatic Codex masking until a tested integration proves raw payloads are replaced before submission.
 
 ### Testing
 
-- [ ] **TEST-01**: Test suite uses only synthetic Brazilian PII, fake secrets, and fake protected paths.
-- [ ] **TEST-02**: Tests assert raw sensitive fixture values never appear in stdout, stderr, logs, hook JSON, masked payloads, or exception messages.
-- [ ] **TEST-03**: Tests cover valid and invalid Brazilian identifier examples, overlap handling, and false-positive lookalikes.
-- [ ] **TEST-04**: Tests cover protected path normalization for Windows paths, mixed separators, relative traversal, quoted paths, and project-root-relative paths.
-- [ ] **TEST-05**: Tests cover Claude prompt and tool hook JSON payloads, malformed input, exit codes, policy modes, and sanitized output.
-- [ ] **TEST-06**: Tests cover fail-closed behavior when detection, masking, configuration, or client capability validation fails.
+- [x] **TEST-01**: Test suite uses only synthetic Brazilian PII, fake secrets, and fake protected paths.
+- [x] **TEST-02**: Tests assert raw sensitive fixture values never appear in stdout, stderr, logs, hook JSON, masked payloads, or exception messages.
+- [x] **TEST-03**: Tests cover valid and invalid Brazilian identifier examples, overlap handling, and false-positive lookalikes.
+- [x] **TEST-04**: Tests cover protected path normalization for Windows paths, mixed separators, relative traversal, quoted paths, and project-root-relative paths.
+- [x] **TEST-05**: Tests cover Claude prompt and tool hook JSON payloads, malformed input, exit codes, policy modes, and sanitized output.
+- [x] **TEST-06**: Tests cover fail-closed behavior when detection, masking, configuration, or client capability validation fails.
 
 ### Documentation
 
@@ -131,15 +131,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLD-03 | Phase 3 | Complete |
 | CLD-04 | Phase 3 | Complete |
 | CLD-05 | Phase 3 | Complete |
-| CDX-01 | Phase 4 | Pending |
-| CDX-02 | Phase 4 | Pending |
-| CDX-03 | Phase 4 | Pending |
-| TEST-01 | Phase 5 | Pending |
-| TEST-02 | Phase 5 | Pending |
-| TEST-03 | Phase 5 | Pending |
-| TEST-04 | Phase 5 | Pending |
-| TEST-05 | Phase 5 | Pending |
-| TEST-06 | Phase 5 | Pending |
+| CDX-01 | Phase 4 | Complete |
+| CDX-02 | Phase 4 | Complete |
+| CDX-03 | Phase 4 | Complete |
+| TEST-01 | Phase 5 | Complete |
+| TEST-02 | Phase 5 | Complete |
+| TEST-03 | Phase 5 | Complete |
+| TEST-04 | Phase 5 | Complete |
+| TEST-05 | Phase 5 | Complete |
+| TEST-06 | Phase 5 | Complete |
 | DOC-01 | Phase 7 | Pending |
 | MAINT-01 | Phase 7 | Pending |
 
@@ -151,3 +151,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 ---
 *Requirements defined: 2026-05-01*
 *Last updated: 2026-05-06 after v1.0 milestone audit (added Phase 6 cleanup + Phase 7 README/hygiene scope, added DOC-01 and MAINT-01)*
+*Last updated: 2026-05-06 after milestone v1.0 cleanup (Phase 6 — synced CDX/TEST checkboxes + traceability with VERIFICATION.md, rewrote PKG-02 to canonical `privguard`)*
