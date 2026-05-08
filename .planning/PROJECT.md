@@ -22,10 +22,13 @@ No sensitive Brazilian or company data should be sent to external LLM providers 
 - ✓ Phase 1 validated package foundation: `pyproject.toml`, importable `privguard` modules, `privguard info`, package-backed hook adapters, and demos separated under `demos/` — Phase 1 Package Foundation; editable-install wrapper has a pending environment UAT due local pip temp-permission errors
 - ✓ Phase 2 validated privacy core: Brazil-first detection, irreversible masking, protected-path classification, fail-closed policy decisions, sanitized diagnostics, CLI scan/mask/policy-check, and synthetic regression coverage — Phase 2 Privacy Core
 - ✓ Phase 3 validated Claude enforcement: Claude Code hook adapters block sensitive prompts, protected reads/searches/edits/writes, risky shell commands, LLM orchestration payload PII, protected wildcard path patterns, and unsafe unsupported surfaces with sanitized metadata-only output — Phase 3 Claude Enforcement
+- ✓ Phase 4 validated Codex compatibility evidence: Codex support is evidence-labeled and no automatic Codex masking claim exists without tested interception/rewrite proof — Phase 4 Codex Compatibility Evidence
+- ✓ Phase 5 validated synthetic regression gate: the v1 surface has synthetic tests proving raw sensitive values do not leak through outputs, logs, hooks, masks, or failures — Phase 5 Synthetic Regression Gate
+- ✓ Phase 6 validated milestone cleanup: requirements, roadmap, summary traceability, canonical `privguard` package metadata, top-level public API exports, and Python 3.14 install guidance match the verified v1 state — Phase 6 Milestone Cleanup
 
 ### Active
 
-- ✓ Gather Codex compatibility evidence and define which interception/rewrite surfaces can be supported safely — Validated in Phase 4: Codex Compatibility Evidence
+- Prepare bilingual README and repository hygiene workflow for first-time users — Phase 7 Project README + Repo Hygiene
 
 ### Out of Scope
 
@@ -39,7 +42,7 @@ No sensitive Brazilian or company data should be sent to external LLM providers 
 
 The user wants this project to enforce privacy for LLM-assisted development and code-agent usage. The risk being addressed is accidental exfiltration of Brazilian personal data, credentials, environment variables, account information, dumps, or other sensitive company data to remote LLM servers.
 
-The current codebase has a package foundation, a validated Phase 2 privacy core, and validated Phase 3 Claude enforcement. The shared core now includes synthetic-only Brazilian identifier and secret detection, irreversible typed masking with verification, protected-path classification without file reads, fail-closed surface policy decisions, sanitized diagnostics, public package exports, and CLI `scan`, `mask`, `policy-check`, and `claude doctor` commands. Editable-install console-wrapper verification remains pending in UAT because local pip temp directory permissions blocked `python -m pip install -e .`.
+The current codebase has a package foundation, a validated privacy core, validated Claude enforcement, evidence-labeled Codex compatibility, a synthetic regression gate, and milestone-cleanup traceability. The shared core now includes synthetic-only Brazilian identifier and secret detection, irreversible typed masking with verification, protected-path classification without file reads, fail-closed surface policy decisions, sanitized diagnostics, public package exports, and CLI `scan`, `mask`, `policy-check`, and `claude doctor` commands. Editable-install console-wrapper verification remains pending in UAT because local pip temp directory permissions blocked `python -m pip install -e .`.
 
 The current Claude integration is now production-hook oriented for the controlled local surfaces: `UserPromptSubmit` blocks sensitive prompt submission by default when safe rewrite is unavailable, `PreToolUse` blocks protected paths, exfiltration-style commands, sensitive glob patterns, unknown/network surfaces, and LLM orchestration payloads containing PII, and all diagnostics are metadata-only. Future v1 product behavior may still move toward automatic masking before external submission where the client provides a proven rewrite surface.
 
@@ -66,6 +69,8 @@ The user is not yet sure which exact integrations beyond Claude/Codex should be 
 | Keep Codex/other IDE agents as compatibility targets | The user wants Claude/Codex coverage but the exact Codex interception surface still needs validation | — Pending |
 | Favor fail-closed behavior where automatic masking cannot be guaranteed | The core value is zero clear-text leakage to external providers | Phase 3 blocks unsupported/unknown Claude surfaces and unsafe scrub mode |
 | Bind external allow decisions to verified masked payloads | A local mask check alone is insufficient unless the authorized payload equals the verified masked text | Phase 2 policy core requires `payload_text == mask_result.text` for unknown/external allow |
+| Keep the canonical CLI/package command name as `privguard` | Phase 1 locked the product name and Phase 6 removed legacy-name drift | Phase 6 removed the legacy console-script alias and synced PKG-02/ROADMAP wording |
+| Gate optional Presidio extras per package on Python 3.14 | Current upstream metadata differs per dependency, so broad gating would make docs and installs stale | Phase 6 keeps analyzer-backed detection gated where needed while leaving supported dependencies installable |
 
 ## Evolution
 
@@ -85,4 +90,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-05 after Phase 5 completion*
+*Last updated: 2026-05-08 after Phase 6 completion*
