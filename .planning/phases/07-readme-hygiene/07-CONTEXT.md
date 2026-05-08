@@ -206,6 +206,52 @@ The planner / executor handles these without further user input:
   Use `pathlib`, `fnmatch`, `tomllib`, `os.walk`. No `shutil.rmtree(..., onerror=)`
   fragility; planner picks the safest stdlib pattern.
 
+### Resolutions from Research Review (2026-05-08)
+
+Two open questions surfaced by `07-RESEARCH.md` were resolved by the user
+before planning. They are locked decisions and supersede any conflicting
+phrasing earlier in this document.
+
+- **D-15:** **Hook command form is console scripts, not `python -m`.** The
+  CONTEXT.md "Specifics" section originally said `python -m privguard.hooks.main_user_prompt`
+  / `python -m privguard.hooks.main_pre_tool`, but `privguard/hooks.py` is a
+  single-file module that exposes `main_user_prompt` and `main_pre_tool` as
+  functions, not as runnable submodules. Resolution: **add two console scripts
+  to `pyproject.toml [project.scripts]`** —
+  ```toml
+  [project.scripts]
+  # ... existing entries ...
+  privguard-user-prompt = "privguard.hooks:main_user_prompt"
+  privguard-pre-tool    = "privguard.hooks:main_pre_tool"
+  ```
+  Both READMEs' Claude Code hook setup section MUST use the console-script
+  names (`privguard-user-prompt`, `privguard-pre-tool`) in the
+  `.claude/settings.json` snippet. The literal `python -m …` phrasing in the
+  earlier "Specifics" subsection is overridden by this decision. Rejected:
+  refactoring `privguard/hooks.py` into a package (expands scope); `python -c
+  '...'` form (ugly).
+
+- **D-16:** **`tomllib` reader uses a conditional `tomli` shim.** `pyproject.toml`
+  declares `requires-python = ">=3.10"`, but `tomllib` is stdlib only in
+  Python 3.11+. Resolution: **add a conditional dependency** to
+  `[project.dependencies]`:
+  ```toml
+  dependencies = [
+      # ... existing entries ...
+      "tomli; python_version < '3.11'",
+  ]
+  ```
+  `privguard/cleanup.py` imports the parser via:
+  ```python
+  try:
+      import tomllib  # Python 3.11+
+  except ModuleNotFoundError:
+      import tomli as tomllib  # Python 3.10
+  ```
+  Preserves the 3.10 floor without bumping it. Rejected: bumping
+  `requires-python` to `>=3.11` (drops 3.10 support unnecessarily for a
+  config-reading utility).
+
 ### Folded Todos
 
 None. The cross-phase todo match returned zero relevant items.
