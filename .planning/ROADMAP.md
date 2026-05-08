@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Claude Enforcement** - Claude Code prompt and tool hooks enforce strict outbound privacy and protected-path blocking with sanitized output.
 - [x] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
 - [x] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
-- [ ] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
+- [x] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
 - [ ] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (EN + PT-BR) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 
 ## Phase Details
@@ -116,10 +116,13 @@ Plans:
   4. The legacy console-script alias is removed (Phase 1 D-01 locked the canonical name to `privguard`); `pyproject.toml` and REQUIREMENTS.md PKG-02 text agree on the canonical name.
   5. `privguard/__init__.py.__all__` re-exports the public Phase 03/04 surface (`classify_command`, `main_user_prompt`, `main_pre_tool`, `build_claude_doctor_report`, `CODEX_COMPATIBILITY`).
   6. Python 3.14 presidio-extras gating is either documented in `pyproject.toml` or relaxed so `pip install privguard[full]` behavior on 3.14 is intentional rather than incidental.
-**Plans**: TBD plans
+**Plans**: 4 plans
 
 Plans:
-- [ ] TBD (run `/gsd-plan-phase 6`)
+- [x] 06-01-PLAN.md — Sync REQUIREMENTS.md checkboxes/traceability and rewrite PKG-02 to canonical `privguard`.
+- [x] 06-02-PLAN.md — Sync ROADMAP.md Phase 5 status/progress and remove legacy CLI-name references (canonical: `privguard`).
+- [x] 06-03-PLAN.md — Backfill `requirements_completed:` frontmatter in 04-01 and 05-01 SUMMARYs (and normalize 04-02).
+- [x] 06-04-PLAN.md — Drop legacy console-script alias, extend `privguard.__all__`, document Python 3.14 extras gating, run verification bar.
 
 ### Phase 7: Project README + Repo Hygiene
 **Goal**: First-time user can land in the repo, understand what privguard does and does not do, install it, and clean up after themselves — in either English or Portuguese.
@@ -159,5 +162,5 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 3. Claude Enforcement | 4/4 | Complete | 2026-05-03 |
 | 4. Codex Compatibility Evidence | 2/2 | Complete | 2026-05-04 |
 | 5. Synthetic Regression Gate | 1/1 | Complete | 2026-05-05 |
-| 6. Milestone Cleanup | 0/TBD | Not started | - |
+| 6. Milestone Cleanup | 4/4 | Complete | 2026-05-08 |
 | 7. Project README + Repo Hygiene | 0/TBD | Not started | - |
