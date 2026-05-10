@@ -6,7 +6,9 @@ build-backend = "setuptools.build_meta"
 name = "privguard"
 version = "0.1.0"
 requires-python = ">=3.10"
-dependencies = []
+dependencies = [
+    "tomli; python_version < '3.11'",
+]
 
 # NOTE (2026-05-07): presidio-analyzer 2.2.362 does not support Python 3.14
 # upstream, so analyzer-backed detection remains gated on
@@ -21,7 +23,23 @@ full = [
 ]
 
 [project.scripts]
-privguard = "privguard.cli:main"
+privguard             = "privguard.cli:main"
+privguard-user-prompt = "privguard.hooks:main_user_prompt"
+privguard-pre-tool    = "privguard.hooks:main_pre_tool"
 
 [tool.setuptools.packages.find]
 include = ["privguard"]
+
+[tool.privguard.cleanup]
+# A trailing "/" means "directory tree, recursive".
+# No trailing "/" means glob-style basename match (fnmatch syntax).
+patterns = [
+    "__pycache__/",
+    "*.py[cod]",
+    ".pytest_cache/",
+    ".coverage",
+    "htmlcov/",
+    "dist/",
+    "build/",
+    "*.egg-info/",
+]

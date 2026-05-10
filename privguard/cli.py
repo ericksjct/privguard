@@ -7,6 +7,7 @@ import sys
 from importlib.metadata import PackageNotFoundError, version
 
 from . import __version__
+from .cleanup import main as cleanup_main
 from .detection import analyze_text, detect
 from .diagnostics import (
     build_claude_doctor_report,
@@ -105,6 +106,10 @@ def cmd_claude_doctor(args: argparse.Namespace) -> int:
     return 0 if claude_doctor_passed(report) else 2
 
 
+def cmd_cleanup(args: argparse.Namespace) -> int:
+    return cleanup_main(args)
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="privguard")
     subparsers = parser.add_subparsers(required=True)
@@ -133,6 +138,14 @@ def main(argv: list[str] | None = None) -> int:
         default=SurfaceCapability.UNKNOWN,
     )
     policy.set_defaults(func=cmd_policy_check)
+
+    cleanup = subparsers.add_parser("cleanup")
+    cleanup.add_argument(
+        "--apply",
+        action="store_true",
+        help="Actually delete (default is dry-run preview).",
+    )
+    cleanup.set_defaults(func=cmd_cleanup)
 
     claude = subparsers.add_parser("claude")
     claude_subparsers = claude.add_subparsers(required=True)
