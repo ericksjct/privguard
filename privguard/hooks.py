@@ -147,6 +147,9 @@ def check_bash(tool_input: dict) -> tuple[bool, str]:
 
 
 def main_user_prompt() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
+        print("privguard-user-prompt: PreToolUse hook for Claude Code. Reads JSON from stdin.")
+        return 0
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):
@@ -244,6 +247,9 @@ def _iter_text_values(value: object) -> list[str]:
 
 
 def main_pre_tool() -> int:
+    if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
+        print("privguard-pre-tool: PreToolUse hook for Claude Code. Reads JSON from stdin.")
+        return 0
     try:
         payload = json.loads(sys.stdin.read())
     except (json.JSONDecodeError, ValueError):

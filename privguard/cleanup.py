@@ -227,8 +227,10 @@ def main(argv: list[str] | argparse.Namespace | None = None) -> int:
         return 0
 
     # --apply branch
-    apply_output = _format_dry_run(matches, skips).replace(
-        "[dry-run] would delete", "[apply] deleting"
+    apply_output = (
+        _format_dry_run(matches, skips)
+        .replace("[dry-run] would delete", "[apply] deleting")
+        .replace("Run with --apply to delete.\n", "")
     )
     sys.stdout.write(apply_output)
     for rel, reason in skips:
