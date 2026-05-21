@@ -194,6 +194,7 @@ def main_user_prompt() -> int:
     mode = os.environ.get("PII_GUARD_MODE", "block")
     hits = list(detect(prompt, min_score=threshold))
     if not hits:
+        _audit_log(event="UserPromptSubmit", action="allow", reason_code="no_pii")
         return 0
 
     if mode == "warn":
