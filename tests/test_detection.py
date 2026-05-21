@@ -154,3 +154,45 @@ def test_package_validators_are_canonical(
 ) -> None:
     assert validator(valid_value) is True
     assert validator(invalid_value) is False
+
+
+# --- Regression tests for 999.3 masking gaps ---
+
+def test_rg_does_not_match_cnpj_prefix() -> None:
+    """RG pattern must not capture the XX.XXX.XXX prefix of a CNPJ."""
+    from privguard.detection import detect
+    hits = detect("12.345.678/0001-90")
+    kinds = [h.kind for h in hits]
+    assert "BR_RG" not in kinds, "CNPJ prefix must not be classified as RG"
+
+
+def test_rg_still_detected_with_suffix() -> None:
+    """RG with explicit digit suffix must still be detected."""
+    from privguard.detection import detect
+    hits = detect("12.345.678-9 SSP/SP")
+    kinds = [h.kind for h in hits]
+    assert "BR_RG" in kinds
+
+
+def test_phone_detected_without_space_after_country_code() -> None:
+    """+55XX format without space between country code and DDD must be detected."""
+    from privguard.detection import detect
+    hits = detect("+5516988887777")
+    kinds = [h.kind for h in hits]
+    assert "BR_PHONE" in kinds, "+55DDD9XXXXXXXX must be detected as BR_PHONE"
+
+
+def test_transaction_id_not_classified_as_plate() -> None:
+    """Transaction IDs like TXN-2026-0315 must not be classified as BR_PLACA_OLD."""
+    from privguard.detection import detect
+    hits = detect("TXN-2026-0315-887766")
+    kinds = [h.kind for h in hits]
+    assert "BR_PLACA_OLD" not in kinds, "Transaction ID must not be classified as license plate"
+
+
+def test_real_plate_still_detected() -> None:
+    """Real BR license plates must still be detected after lookahead fix."""
+    from privguard.detection import detect
+    hits = detect("placa ABC-1234 do veiculo")
+    kinds = [h.kind for h in hits]
+    assert "BR_PLACA_OLD" in kinds
