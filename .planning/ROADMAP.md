@@ -154,6 +154,24 @@ Plans:
 
 **Goal:** Registrar em `~/.privguard/audit.log` cada evento de bloqueio/warn dos hooks como linha JSON (timestamp, reason_code, category). Fire-and-forget — nunca falha o hook se o log não puder ser escrito. Inclui 1-2 testes de contrato.
 **Requirements:** TBD
+**Plans:** 1 plan
+
+Plans:
+- [x] 999.2-01: _audit_log() + instrumentação + testes (complete 2026-05-21)
+
+### Phase 999.3: Masking Gaps — CNPJ, Email, PIX celular (BACKLOG)
+
+**Goal:** Fechar gaps de detecção encontrados no stress test (texto_com_pii.txt): (1) CNPJ não é detectado — o prefixo `XX.XXX.XXX` é confundido com RG; (2) emails são mascarados de forma inconsistente — a maioria passa sem máscara; (3) PIX chave celular (`+55169...`) não é mascarado. Falsos positivos relacionados: transaction IDs confundidos com placa (`<BR_PLACA_OLD>`), códigos de barras confundidos com PIS/PASEP e telefone.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
+### Phase 999.4: CPF Leniency Mode — mascarar CPFs com checksum inválido (BACKLOG)
+
+**Goal:** Atualmente só CPFs com dígito verificador válido são detectados/mascarados. CPFs sintéticos ou com erro de digitação (`456.789.123-45`, `111.222.333-44`, etc.) passam sem máscara. Implementar modo leniente opcional (`PII_GUARD_CPF_STRICT=false` ou similar) que mascara qualquer padrão `DDD.DDD.DDD-DD` independente do checksum. Decisão: strict é o default seguro; lenient é opt-in para cenários de teste com dados sintéticos.
+**Requirements:** TBD
 **Plans:** 0 plans
 
 Plans:
