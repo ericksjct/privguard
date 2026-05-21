@@ -1,9 +1,9 @@
 ---
-status: complete
+status: resolved
 phase: 07-readme-hygiene
 source: [07-01-SUMMARY.md, 07-02-SUMMARY.md, 07-03-SUMMARY.md]
 started: 2026-05-10T20:00:00Z
-updated: 2026-05-21T19:47:00Z
+updated: 2026-05-21T19:55:00Z
 ---
 
 ## Current Test
@@ -56,16 +56,16 @@ blocked: 0
 ## Gaps
 
 - truth: "privguard cleanup --apply should not print 'Run with --apply to delete.' footer"
-  status: failed
-  reason: "User reported: footer 'Run with --apply to delete.' appears in --apply output — it should only appear in dry-run mode"
+  status: resolved
+  reason: "Fixed in abc3c72 — strip footer from apply output via .replace()"
   severity: minor
   test: 2
   artifacts: [privguard/cleanup.py]
   missing: []
 
 - truth: "privguard-user-prompt and privguard-pre-tool should respond to --help"
-  status: failed
-  reason: "User reported: privguard-user-prompt --help produces no output. Hook scripts exist but --help is not implemented."
+  status: resolved
+  reason: "Fixed in abc3c72 — added --help/-h handler before stdin.read() in both main functions"
   severity: minor
   test: 4
   artifacts: [privguard/hooks.py]
