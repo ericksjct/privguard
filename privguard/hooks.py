@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import datetime
 import json
 import math
 import os
+import pathlib
 import sys
 
 from .detection import detect
@@ -12,7 +14,35 @@ from .diagnostics import format_hit_summary, summarize_hits, to_json
 from .policy import classify_command, classify_path
 
 
+def _audit_log(
+    *,
+    event: str,
+    action: str,
+    reason_code: str,
+    category: str = "",
+    log_path: "pathlib.Path | None" = None,
+) -> None:
+    """Append one JSON line to ~/.privguard/audit.log. Never raises."""
+    try:
+        if log_path is None:
+            log_dir = pathlib.Path.home() / ".privguard"
+            log_dir.mkdir(parents=True, exist_ok=True)
+            log_path = log_dir / "audit.log"
+        entry = {
+            "ts": datetime.datetime.now(datetime.UTC).isoformat().replace("+00:00", "Z"),
+            "event": event,
+            "action": action,
+            "reason_code": reason_code,
+            "category": category,
+        }
+        with log_path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(entry) + "\n")
+    except Exception:
+        pass
+
+
 def deny(prefix: str, reason_code: str) -> int:
+    _audit_log(event="UserPromptSubmit", action="block", reason_code=reason_code)
     sys.stderr.write(f"[{prefix} BLOQUEADO] reason={reason_code}\n")
     return 2
 
@@ -35,6 +65,7 @@ def _deny_pre_tool(
     if command_count:
         details.append(f"command_count={command_count}")
     details.append("remediation=remove_protected_path_or_use_synthetic_fixture")
+    _audit_log(event="PreToolUse", action="block", reason_code=reason_code, category=category)
     sys.stderr.write("[PRE-TOOL-GUARD BLOQUEADO] " + " ".join(details) + "\n")
     return 2
 
@@ -166,6 +197,7 @@ def main_user_prompt() -> int:
         return 0
 
     if mode == "warn":
+        _audit_log(event="UserPromptSubmit", action="warn", reason_code="pii_detected")
         print(_prompt_json_context(reason_code="pii_detected", hits=hits, mode=mode))
         return 0
 
@@ -173,6 +205,7 @@ def main_user_prompt() -> int:
         # scrub cannot replace the original prompt via additionalContext (it only
         # appends, leaking clear-text).  Treat scrub as block until Claude exposes
         # a documented prompt-replacement mechanism.
+        _audit_log(event="UserPromptSubmit", action="block", reason_code="scrub_unsupported")
         sys.stderr.write(
             "[PII-GUARD BLOQUEADO] "
             + _prompt_diagnostic(
@@ -185,6 +218,7 @@ def main_user_prompt() -> int:
         )
         return 2
 
+    _audit_log(event="UserPromptSubmit", action="block", reason_code="pii_detected")
     sys.stderr.write(
         "[PII-GUARD BLOQUEADO] "
         + _prompt_diagnostic(action="block", reason_code="pii_detected", hits=hits)

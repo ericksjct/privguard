@@ -6,8 +6,11 @@ import sys
 
 import pytest
 
+import pathlib
+
 from privguard.hooks import main_user_prompt
 from privguard.hooks import main_pre_tool
+from privguard.hooks import _audit_log
 
 
 RAW_CPF = "123.456.789-09"
@@ -317,3 +320,34 @@ def test_non_blocking_prompt_modes_are_labeled_non_protective_and_sanitized(
     assert "BR_CPF" in output
     assert "API_KEY" in output
     assert_no_prompt_derived_text(output)
+
+
+def test_audit_log_block_writes_json_line(tmp_path: pathlib.Path) -> None:
+    """A block event appends a valid JSON line to the log."""
+    log_file = tmp_path / "audit.log"
+    _audit_log(
+        event="PreToolUse",
+        action="block",
+        reason_code="unknown_tool",
+        category="unknown_tool",
+        log_path=log_file,
+    )
+    assert log_file.exists()
+    entry = json.loads(log_file.read_text(encoding="utf-8").strip())
+    assert entry["event"] == "PreToolUse"
+    assert entry["action"] == "block"
+    assert entry["reason_code"] == "unknown_tool"
+    assert entry["category"] == "unknown_tool"
+    assert entry["ts"].endswith("Z")
+
+
+def test_audit_log_silently_ignores_write_failure(tmp_path: pathlib.Path) -> None:
+    """_audit_log never raises even if the log path is unwritable."""
+    bad_path = tmp_path / "nonexistent_dir" / "subdir" / "audit.log"
+    _audit_log(
+        event="UserPromptSubmit",
+        action="block",
+        reason_code="pii_detected",
+        log_path=bad_path,
+    )
+    # reaching here means no exception was raised
