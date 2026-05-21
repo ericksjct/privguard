@@ -150,6 +150,15 @@ Plans:
 Plans:
 - [ ] TBD (promote with /gsd-review-backlog when ready)
 
+### Phase 999.2: Audit Log Mínimo Viável (BACKLOG)
+
+**Goal:** Registrar em `~/.privguard/audit.log` cada evento de bloqueio/warn dos hooks como linha JSON (timestamp, reason_code, category). Fire-and-forget — nunca falha o hook se o log não puder ser escrito. Inclui 1-2 testes de contrato.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
 ## Progress
 
 **Execution Order:**
