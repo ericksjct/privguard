@@ -163,7 +163,7 @@ Plans:
 
 **Goal:** Fechar gaps de detecção encontrados no stress test (texto_com_pii.txt): (1) CNPJ não é detectado — o prefixo `XX.XXX.XXX` é confundido com RG; (2) emails são mascarados de forma inconsistente — a maioria passa sem máscara; (3) PIX chave celular (`+55169...`) não é mascarado. Falsos positivos relacionados: transaction IDs confundidos com placa (`<BR_PLACA_OLD>`), códigos de barras confundidos com PIS/PASEP e telefone.
 **Requirements:** TBD
-**Plans:** 0 plans
+**Plans:** 1/1 plans complete
 
 Plans:
 - [ ] TBD (promote with /gsd-review-backlog when ready)
