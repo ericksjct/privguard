@@ -170,12 +170,13 @@ Plans:
 
 ### Phase 999.4: CPF Leniency Mode — mascarar CPFs com checksum inválido (BACKLOG)
 
-**Goal:** Atualmente só CPFs com dígito verificador válido são detectados/mascarados. CPFs sintéticos ou com erro de digitação (`456.789.123-45`, `111.222.333-44`, etc.) passam sem máscara. Implementar modo leniente opcional (`PII_GUARD_CPF_STRICT=false` ou similar) que mascara qualquer padrão `DDD.DDD.DDD-DD` independente do checksum. Decisão: strict é o default seguro; lenient é opt-in para cenários de teste com dados sintéticos.
-**Requirements:** TBD
-**Plans:** 0 plans
+**Goal:** Atualmente só CPFs com dígito verificador válido são detectados/mascarados. CPFs sintéticos ou com erro de digitação (`456.789.123-45`, `111.222.333-44`, etc.) passam sem máscara. Implementar modo leniente opcional (`PII_GUARD_LENIENT=true`) que mascara qualquer padrão `DDD.DDD.DDD-DD` independente do checksum. Decisão: strict é o default seguro; lenient é opt-in para cenários de teste com dados sintéticos. CNH leniency (bare 11-digit) deferred to future phase due to high false-positive risk.
+**Requirements:** DET-01
+**Plans:** 2 plans
 
 Plans:
-- [ ] TBD (promote with /gsd-review-backlog when ready)
+- [ ] 999.4-01-PLAN.md — Add _lenient_default(), _LENIENT_KINDS, _LENIENT_SCORES to detection.py; update detect() and analyze_text(); add lenient to mask_text()
+- [ ] 999.4-02-PLAN.md — Add --lenient CLI flag to scan/mask/policy-check; add 7 detection tests + 1 masking test
 
 ## Progress
 
