@@ -401,3 +401,35 @@ def test_lenient_env_var_false_when_absent(monkeypatch: pytest.MonkeyPatch) -> N
     monkeypatch.delenv("PII_GUARD_LENIENT", raising=False)
     hits = detection.detect(_INVALID_CPF_FORMATTED)
     assert not any(h.kind == "BR_CPF" for h in hits)
+
+
+# --- Regression tests for BR_ADDRESS detection ---
+
+def test_address_rua_with_numero() -> None:
+    """'Rua X, nº N' must be detected as BR_ADDRESS."""
+    hits = detection.detect("Rua das Flores, nº 123, apto 4")
+    assert any(h.kind == "BR_ADDRESS" for h in hits)
+
+
+def test_address_avenida() -> None:
+    """'Avenida X, nº N' must be detected."""
+    hits = detection.detect("Avenida Paulista, nº 1578")
+    assert any(h.kind == "BR_ADDRESS" for h in hits)
+
+
+def test_address_alameda_no_comma() -> None:
+    """'alameda X N' (sem vírgula, minúscula) must be detected."""
+    hits = detection.detect("alameda dos buritis 789 casa 3")
+    assert any(h.kind == "BR_ADDRESS" for h in hits)
+
+
+def test_address_rua_apostrophe() -> None:
+    """Street name with apostrophe must be detected."""
+    hits = detection.detect("rua Sant'Anna 45 centro")
+    assert any(h.kind == "BR_ADDRESS" for h in hits)
+
+
+def test_address_no_keyword_not_detected() -> None:
+    """Address without a street type keyword must NOT be detected as BR_ADDRESS."""
+    hits = detection.detect("numero 123 do bloco B")
+    assert not any(h.kind == "BR_ADDRESS" for h in hits)

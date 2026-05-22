@@ -190,6 +190,12 @@ PATTERNS: list[PatternEntry] = [
     PatternEntry("JWT", re.compile(r"\beyJ[\w-]+\.[\w-]+\.[\w-]+\b"), 0.90, None, "secret_token"),
     PatternEntry("BR_BANK_AGENCY", re.compile(r"(?:Ag[eê]ncia|Ag\.?)\s*(?:n[oºª°]\.?\s*)?\d{4,5}(?:-\d)?\b", re.IGNORECASE), 0.80),
     PatternEntry("BR_BANK_ACCOUNT", re.compile(r"(?:Conta\s+(?:Corrente|Poupan[çc]a)|C(?:\.?\s*/?\s*\.?C|C))\s*(?:n[oºª°]\.?\s*)?\d{4,7}-?\d?\b", re.IGNORECASE), 0.80),
+    PatternEntry("BR_ADDRESS", re.compile(
+        r"(?:Rua|R\.|Avenida|Av\.?|Alameda|Al\.|Travessa|Trav\.|Estrada|Est\.|"
+        r"Rodovia|Rod\.|Pra[çc]a|Pç\.|Largo|Vila|Vl\.)"
+        r"\s+(?:[A-Za-zÀ-ÿ'][A-Za-zÀ-ÿ'\.\s]{1,45}?)(?:\s*,\s*|\s+)(?:n[oº°]\.?\s*)?\d[\d\.]*",
+        re.IGNORECASE,
+    ), 0.62),
     PatternEntry("IP_PRIVADO", re.compile(r"\b(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}\b"), 0.70),
     PatternEntry("IP_PUBLICO", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), 0.65),
 ]
