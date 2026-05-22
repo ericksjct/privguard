@@ -344,3 +344,60 @@ def test_analyze_text_lenient_returns_cpf_count() -> None:
     os.environ.pop("PII_GUARD_LENIENT", None)
     report = analyze_text("456.789.123-45", lenient=True)
     assert report.counts == {"BR_CPF": 1}, f"expected {{'BR_CPF': 1}}, got {report.counts}"
+
+
+# --- CPF Leniency Mode (999.4) ---
+
+_INVALID_CPF_FORMATTED = "456.789.123-45"   # formatted, checksum fails
+_VALID_CPF_FORMATTED   = "123.456.789-09"   # formatted, checksum passes
+
+
+def test_lenient_cpf_detects_invalid_checksum_formatted_v2() -> None:
+    """lenient=True must detect a formatted CPF with invalid checksum."""
+    hits = detection.detect(_INVALID_CPF_FORMATTED, lenient=True)
+    assert any(h.kind == "BR_CPF" for h in hits)
+
+
+def test_strict_mode_is_default() -> None:
+    """detect() with lenient=False must not detect invalid-checksum CPF."""
+    hits = detection.detect(_INVALID_CPF_FORMATTED, lenient=False)
+    assert not any(h.kind == "BR_CPF" for h in hits)
+
+
+def test_lenient_hit_has_lower_score_than_strict_v2() -> None:
+    """Lenient CPF score must be strictly below strict score (0.95)."""
+    hits = detection.detect(_INVALID_CPF_FORMATTED, lenient=True)
+    cpf_hits = [h for h in hits if h.kind == "BR_CPF"]
+    assert cpf_hits, "expected a lenient BR_CPF hit"
+    assert cpf_hits[0].score < 0.95
+
+
+def test_lenient_reason_code_v2() -> None:
+    """Lenient hits must carry reason_code='lenient_pattern'."""
+    hits = detection.detect(_INVALID_CPF_FORMATTED, lenient=True)
+    cpf_hits = [h for h in hits if h.kind == "BR_CPF"]
+    assert cpf_hits, "expected a lenient BR_CPF hit"
+    assert cpf_hits[0].reason_code == "lenient_pattern"
+
+
+def test_lenient_does_not_shadow_valid_strict_hit_v2() -> None:
+    """When checksum passes, strict hit (score 0.95) must win over lenient."""
+    hits = detection.detect(_VALID_CPF_FORMATTED, lenient=True)
+    cpf_hits = [h for h in hits if h.kind == "BR_CPF"]
+    assert len(cpf_hits) == 1
+    assert cpf_hits[0].score == 0.95
+    assert cpf_hits[0].reason_code == "checksum_valid"
+
+
+def test_lenient_cpf_env_var(monkeypatch: pytest.MonkeyPatch) -> None:
+    """PII_GUARD_LENIENT=true in env must activate leniency when lenient param is absent."""
+    monkeypatch.setenv("PII_GUARD_LENIENT", "true")
+    hits = detection.detect(_INVALID_CPF_FORMATTED)   # lenient=None → reads env
+    assert any(h.kind == "BR_CPF" for h in hits)
+
+
+def test_lenient_env_var_false_when_absent(monkeypatch: pytest.MonkeyPatch) -> None:
+    """When PII_GUARD_LENIENT is unset, default must be strict."""
+    monkeypatch.delenv("PII_GUARD_LENIENT", raising=False)
+    hits = detection.detect(_INVALID_CPF_FORMATTED)
+    assert not any(h.kind == "BR_CPF" for h in hits)
