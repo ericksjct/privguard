@@ -45,7 +45,8 @@ def _read_text(args: argparse.Namespace) -> str:
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
-    report = analyze_text(_read_text(args))
+    lenient = True if args.lenient else None
+    report = analyze_text(_read_text(args), lenient=lenient)
     if args.json:
         print(to_json(report))
     else:
@@ -60,7 +61,8 @@ def cmd_mask(args: argparse.Namespace) -> int:
       0 — masking verified; output on stdout is safe to forward.
       2 — masking unverified; output goes to stderr only; do NOT forward.
     """
-    result = mask_text(_read_text(args))
+    lenient = True if args.lenient else None
+    result = mask_text(_read_text(args), lenient=lenient)
     if not result.verified:
         if args.json:
             print(to_json(result), file=sys.stderr)
@@ -80,7 +82,8 @@ def cmd_mask(args: argparse.Namespace) -> int:
 
 def cmd_policy_check(args: argparse.Namespace) -> int:
     text = _read_text(args)
-    hits = detect(text)
+    lenient = True if args.lenient else None
+    hits = detect(text, lenient=lenient)
     mask_result = mask_text(text, hits=hits) if args.masked else None
     path_classification = classify_path(args.path) if args.path else None
     decision = decide_policy(
@@ -125,11 +128,23 @@ def main(argv: list[str] | None = None) -> int:
     scan = subparsers.add_parser("scan")
     scan.add_argument("text", nargs="?")
     scan.add_argument("--json", action="store_true")
+    scan.add_argument(
+        "--lenient",
+        action="store_true",
+        default=False,
+        help="Mask DDD.DDD.DDD-DD CPF patterns regardless of checksum (opt-in).",
+    )
     scan.set_defaults(func=cmd_scan)
 
     mask = subparsers.add_parser("mask")
     mask.add_argument("text", nargs="?")
     mask.add_argument("--json", action="store_true")
+    mask.add_argument(
+        "--lenient",
+        action="store_true",
+        default=False,
+        help="Mask DDD.DDD.DDD-DD CPF patterns regardless of checksum (opt-in).",
+    )
     mask.set_defaults(func=cmd_mask)
 
     policy = subparsers.add_parser("policy-check")
@@ -141,6 +156,12 @@ def main(argv: list[str] | None = None) -> int:
         "--capability",
         choices=sorted(SurfaceCapability.ALL),
         default=SurfaceCapability.UNKNOWN,
+    )
+    policy.add_argument(
+        "--lenient",
+        action="store_true",
+        default=False,
+        help="Mask DDD.DDD.DDD-DD CPF patterns regardless of checksum (opt-in).",
     )
     policy.set_defaults(func=cmd_policy_check)
 
