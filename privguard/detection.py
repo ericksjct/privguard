@@ -176,7 +176,7 @@ PATTERNS: list[PatternEntry] = [
     PatternEntry("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]{2,}\b"), 0.95),
     PatternEntry("IBAN", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{12,30}\b"), 0.90),
     PatternEntry("BR_RG", re.compile(r"\b\d{1,2}\.\d{3}\.\d{3}-[\dXx]\b"), 0.78),
-    PatternEntry("BR_PHONE", re.compile(r"(?:\+55\s?)?\(?\d{2}\)?\s?(?:9[\s-]?\d{4}|[2-5]\d{3})[\s-]?\d{4}\b"), 0.76),
+    PatternEntry("BR_PHONE", re.compile(r"(?<!\d)(?:\+55\s?)?\(?\d{2}\)?\s?(?:9[\s-]?\d{4}|[2-5]\d{3})[\s-]?\d{4}\b"), 0.76),
     PatternEntry("BR_CEP", re.compile(r"\b\d{5}-?\d{3}\b"), 0.72),
     PatternEntry("BR_PLACA_MERCOSUL", re.compile(r"\b[A-Z]{3}\d[A-Z]\d{2}\b"), 0.85),
     PatternEntry("BR_PLACA_OLD", re.compile(r"\b[A-Z]{3}-?\d{4}(?![-\d])\b"), 0.80),
