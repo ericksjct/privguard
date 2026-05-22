@@ -82,8 +82,11 @@ def mask_text(
     text: str,
     hits: Sequence[Hit] | None = None,
     min_score: float = 0.6,
+    lenient: bool | None = None,
 ) -> MaskResult:
-    selected_hits = _normalize_hits(hits if hits is not None else detect(text, min_score=min_score))
+    selected_hits = _normalize_hits(
+        hits if hits is not None else detect(text, min_score=min_score, lenient=lenient)
+    )
     masked_text = _replace_spans(text, selected_hits)
     verified, verification_reasons = verify_mask(
         text,
