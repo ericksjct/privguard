@@ -254,3 +254,93 @@ def test_bank_account_full_form() -> None:
     hits = detect("Conta Corrente no 87654-3 titular")
     kinds = [h.kind for h in hits]
     assert "BR_BANK_ACCOUNT" in kinds
+
+
+# --- Phase 999.4: CPF leniency mode tests ---
+
+def test_lenient_cpf_detects_invalid_checksum_formatted() -> None:
+    """detect('456.789.123-45', lenient=True) returns one BR_CPF hit."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("456.789.123-45", lenient=True)
+    kinds = [h.kind for h in hits]
+    assert "BR_CPF" in kinds, "lenient=True must detect invalid-checksum formatted CPF"
+
+
+def test_strict_mode_is_default_no_env_var() -> None:
+    """detect('456.789.123-45') with no env var returns no BR_CPF hit."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("456.789.123-45")
+    kinds = [h.kind for h in hits]
+    assert "BR_CPF" not in kinds, "strict default must block invalid-checksum CPF"
+
+
+def test_lenient_hit_has_lower_score_than_strict() -> None:
+    """Lenient CPF score must be 0.75, below the strict 0.95."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("456.789.123-45", lenient=True)
+    cpf_hits = [h for h in hits if h.kind == "BR_CPF"]
+    assert cpf_hits, "must have at least one BR_CPF hit in lenient mode"
+    assert cpf_hits[0].score == 0.75, f"lenient score must be 0.75, got {cpf_hits[0].score}"
+
+
+def test_lenient_reason_code() -> None:
+    """Lenient CPF hits must carry reason_code='lenient_pattern'."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("456.789.123-45", lenient=True)
+    cpf_hits = [h for h in hits if h.kind == "BR_CPF"]
+    assert cpf_hits, "must have at least one BR_CPF hit in lenient mode"
+    assert cpf_hits[0].reason_code == "lenient_pattern", (
+        f"lenient reason_code must be 'lenient_pattern', got {cpf_hits[0].reason_code!r}"
+    )
+
+
+def test_lenient_does_not_shadow_valid_strict_hit() -> None:
+    """Valid-checksum CPF with lenient=True must still produce strict hit (score=0.95)."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("123.456.789-09", lenient=True)
+    cpf_hits = [h for h in hits if h.kind == "BR_CPF"]
+    assert cpf_hits, "valid CPF must be detected even with lenient=True"
+    assert cpf_hits[0].score == 0.95, f"valid CPF must retain score=0.95, got {cpf_hits[0].score}"
+    assert cpf_hits[0].reason_code == "checksum_valid"
+
+
+def test_lenient_cpf_env_var_activates_leniency() -> None:
+    """PII_GUARD_LENIENT=true env var must activate leniency when lenient param is None."""
+    from privguard.detection import detect
+    import os
+    os.environ["PII_GUARD_LENIENT"] = "true"
+    try:
+        hits = detect("456.789.123-45")
+        kinds = [h.kind for h in hits]
+        assert "BR_CPF" in kinds, "PII_GUARD_LENIENT=true must cause invalid CPF to be detected"
+    finally:
+        os.environ.pop("PII_GUARD_LENIENT", None)
+
+
+def test_lenient_bare_11digit_cpf_stays_strict() -> None:
+    """Bare 11-digit CPF must not be emitted as lenient hit (format guard)."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("45678912345", lenient=True)
+    kinds = [h.kind for h in hits]
+    assert "BR_CPF" not in kinds, "bare 11-digit CPF must stay strict in lenient mode"
+
+
+def test_analyze_text_lenient_returns_cpf_count() -> None:
+    """analyze_text('456.789.123-45', lenient=True) returns counts={'BR_CPF': 1}."""
+    from privguard.detection import analyze_text
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    report = analyze_text("456.789.123-45", lenient=True)
+    assert report.counts == {"BR_CPF": 1}, f"expected {{'BR_CPF': 1}}, got {report.counts}"

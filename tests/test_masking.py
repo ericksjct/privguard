@@ -150,3 +150,32 @@ def test_to_dict_sanitizes_hits_and_nested_structures() -> None:
     assert data["hit"]["kind"] == "BR_CPF"
     assert "value" not in data["hit"]
     assert raw_cpf not in str(data)
+
+
+# --- Phase 999.4: CPF leniency masking tests ---
+
+def test_lenient_cpf_masks_correctly() -> None:
+    """mask_text('456.789.123-45', lenient=True) returns verified=True with <BR_CPF>."""
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    result = mask_text("456.789.123-45", lenient=True)
+    assert result.verified is True, f"verified must be True, got {result.verified}"
+    assert "<BR_CPF>" in result.text, f"<BR_CPF> not in masked text: {result.text}"
+    assert "456.789.123-45" not in result.text, "raw CPF value must not remain after masking"
+
+
+def test_lenient_mask_strict_default_leaves_invalid_cpf_unmasked() -> None:
+    """mask_text('456.789.123-45') with no param leaves the invalid CPF unmasked."""
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    result = mask_text("456.789.123-45")
+    assert "456.789.123-45" in result.text, "strict default must leave invalid CPF unmasked"
+
+
+def test_lenient_mask_backward_compat_valid_cpf() -> None:
+    """Existing valid CPF masking still works with no lenient param."""
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    result = mask_text("CPF 123.456.789-09")
+    assert "<BR_CPF>" in result.text
+    assert result.verified is True
