@@ -178,6 +178,20 @@ Plans:
 - [x] 999.4-01-PLAN.md — Add _lenient_default(), _LENIENT_KINDS, _LENIENT_SCORES to detection.py; update detect() and analyze_text(); add lenient to mask_text()
 - [x] 999.4-02-PLAN.md — Add --lenient CLI flag to scan/mask/policy-check; add 7 detection tests + 1 masking test
 
+### Phase 999.5: Detection Hardening v2 — CEP variants, CNPJ leniency, IBAN FP fix, name detection opt-in (BACKLOG)
+
+**Goal:** Fechar os gaps de detecção identificados via stress-test com `texto_com_pii.txt`:
+1. **CEP variante com ponto** — `14.025-580` não é detectado; regex atual `\d{5}-?\d{3}` não cobre formato `NN.NNN-NNN`.
+2. **CNPJ leniency** (opt-in `PII_GUARD_LENIENT_CNPJ=true`) — CNPJs sintéticos/com checksum inválido (`12.345.678/0001-90`) passam sem máscara. Mesmo padrão do CPF lenient.
+3. **IBAN falso positivo** — `DE89 3704 0044 0532 0130 00` gera `DE<BR_PHONE>` porque `89 3704 0044` casa como telefone (E antes de 89 não é dígito, logo `(?<!\d)` não bloqueia). Precisamos de um IBAN pattern que reconheça espaços ou de um guard adicional.
+4. **Detecção de nomes brasileiros** (opt-in via `PII_GUARD_DETECT_NAMES=true` ou `--detect-names`) — Usar top ~1.500 primeiros nomes + ~300 sobrenomes do Censo IBGE 2010 (cobertura ~95% da população). Implementação: `frozenset` + tokenização por espaço/pontuação + lookup O(1). Score: 0.58 (primeiro nome isolado) → 0.65 (sobrenome) → 0.72 (primeiro + sobrenome consecutivos). Não ativa por default (muitas palavras comuns são nomes). Função separada `detect_names()` chamada dentro de `detect()` quando habilitado. Dados: baixar do IBGE via API ou Censo 2010 SIDRA.
+5. **Falsos positivos de código de barras** (Bloco 9) — `BR_PIS_PASEP` e `BR_PHONE` casam dentro de sequências de código de barras. Investigar guards adicionais.
+**Requirements:** TBD
+**Plans:** 0 plans
+
+Plans:
+- [ ] TBD (promote with /gsd-review-backlog when ready)
+
 ## Progress
 
 **Execution Order:**
