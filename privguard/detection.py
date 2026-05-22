@@ -175,7 +175,7 @@ PATTERNS: list[PatternEntry] = [
     PatternEntry("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]{2,}\b"), 0.95),
     PatternEntry("IBAN", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{12,30}\b"), 0.90),
     PatternEntry("BR_RG", re.compile(r"\b\d{1,2}\.\d{3}\.\d{3}-[\dXx]\b"), 0.78),
-    PatternEntry("BR_PHONE", re.compile(r"(?:\+55\s?)?\(?\d{2}\)?\s?(?:9\d{4}|[2-5]\d{3})-?\d{4}\b"), 0.76),
+    PatternEntry("BR_PHONE", re.compile(r"(?:\+55\s?)?\(?\d{2}\)?\s?(?:9[\s-]?\d{4}|[2-5]\d{3})[\s-]?\d{4}\b"), 0.76),
     PatternEntry("BR_CEP", re.compile(r"\b\d{5}-?\d{3}\b"), 0.72),
     PatternEntry("BR_PLACA_MERCOSUL", re.compile(r"\b[A-Z]{3}\d[A-Z]\d{2}\b"), 0.85),
     PatternEntry("BR_PLACA_OLD", re.compile(r"\b[A-Z]{3}-?\d{4}(?![-\d])\b"), 0.80),
@@ -187,8 +187,10 @@ PATTERNS: list[PatternEntry] = [
     PatternEntry("SECRET_ASSIGNMENT", re.compile(r"\b(?:api[_-]?key|secret|token|password|passwd|pwd|senha)\s*[:=]\s*['\"]?[^'\"\s;]+", re.IGNORECASE), 0.98, None, "secret_assignment"),
     PatternEntry("ENV_VAR_ASSIGNMENT", re.compile(r"\b[A-Z][A-Z0-9_]*(?:SECRET|TOKEN|KEY|PASSWORD|PASS|PWD)[A-Z0-9_]*\s*=\s*['\"]?[^'\"\s;]+"), 0.96, None, "secret_assignment"),
     PatternEntry("JWT", re.compile(r"\beyJ[\w-]+\.[\w-]+\.[\w-]+\b"), 0.90, None, "secret_token"),
+    PatternEntry("BR_BANK_AGENCY", re.compile(r"(?:Ag[eê]ncia|Ag\.?)\s*(?:n[oºª°]\.?\s*)?\d{4,5}(?:-\d)?\b", re.IGNORECASE), 0.80),
+    PatternEntry("BR_BANK_ACCOUNT", re.compile(r"(?:Conta\s+(?:Corrente|Poupan[çc]a)|C(?:\.?\s*/?\s*\.?C|C))\s*(?:n[oºª°]\.?\s*)?\d{4,7}-?\d?\b", re.IGNORECASE), 0.80),
     PatternEntry("IP_PRIVADO", re.compile(r"\b(?:10|192\.168|172\.(?:1[6-9]|2\d|3[01]))\.\d{1,3}\.\d{1,3}\b"), 0.70),
-    PatternEntry("IP_PUBLICO", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), 0.50),
+    PatternEntry("IP_PUBLICO", re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"), 0.65),
 ]
 
 

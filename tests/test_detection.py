@@ -196,3 +196,61 @@ def test_real_plate_still_detected() -> None:
     hits = detect("placa ABC-1234 do veiculo")
     kinds = [h.kind for h in hits]
     assert "BR_PLACA_OLD" in kinds
+
+
+# --- Regression tests for detection improvements (phone spaces, IP, bank) ---
+
+def test_phone_spaced_9th_digit() -> None:
+    """Phone with space after 9th digit must be detected."""
+    from privguard.detection import detect
+    hits = detect("fone 16 9 9123 4567 ok")
+    kinds = [h.kind for h in hits]
+    assert "BR_PHONE" in kinds, "DDD + 9 + space + rest must match BR_PHONE"
+
+
+def test_phone_spaced_format_2() -> None:
+    """Phone '11 9 8888-7777' must be detected."""
+    from privguard.detection import detect
+    hits = detect("cel 11 9 8888-7777 fim")
+    kinds = [h.kind for h in hits]
+    assert "BR_PHONE" in kinds
+
+
+def test_ip_publico_detected() -> None:
+    """Public IP addresses must be detected (score >= 0.60)."""
+    from privguard.detection import detect
+    hits = detect("ip=200.200.100.50 acesso")
+    kinds = [h.kind for h in hits]
+    assert "IP_PUBLICO" in kinds or "IP_PRIVADO" in kinds, "IP address must be detected"
+
+
+def test_bank_agency_short_form() -> None:
+    """Short-form agency 'Ag 4321' must be detected as BR_BANK_AGENCY."""
+    from privguard.detection import detect
+    hits = detect("depositar Ag 4321 banco")
+    kinds = [h.kind for h in hits]
+    assert "BR_BANK_AGENCY" in kinds
+
+
+def test_bank_agency_full_form() -> None:
+    """Full-form 'Agência 1234-5' must be detected."""
+    from privguard.detection import detect
+    hits = detect("Agência 1234-5 do banco")
+    kinds = [h.kind for h in hits]
+    assert "BR_BANK_AGENCY" in kinds
+
+
+def test_bank_account_cc() -> None:
+    """'CC 98765-4' must be detected as BR_BANK_ACCOUNT."""
+    from privguard.detection import detect
+    hits = detect("conta CC 98765-4 do cliente")
+    kinds = [h.kind for h in hits]
+    assert "BR_BANK_ACCOUNT" in kinds
+
+
+def test_bank_account_full_form() -> None:
+    """'Conta Corrente nº 87654-3' must be detected."""
+    from privguard.detection import detect
+    hits = detect("Conta Corrente no 87654-3 titular")
+    kinds = [h.kind for h in hits]
+    assert "BR_BANK_ACCOUNT" in kinds
