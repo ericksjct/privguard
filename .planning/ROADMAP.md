@@ -182,15 +182,18 @@ Plans:
 
 **Goal:** Fechar os gaps de detecção identificados via stress-test com `texto_com_pii.txt`:
 1. **CEP variante com ponto** — `14.025-580` não é detectado; regex atual `\d{5}-?\d{3}` não cobre formato `NN.NNN-NNN`.
-2. **CNPJ leniency** (opt-in `PII_GUARD_LENIENT_CNPJ=true`) — CNPJs sintéticos/com checksum inválido (`12.345.678/0001-90`) passam sem máscara. Mesmo padrão do CPF lenient.
-3. **IBAN falso positivo** — `DE89 3704 0044 0532 0130 00` gera `DE<BR_PHONE>` porque `89 3704 0044` casa como telefone (E antes de 89 não é dígito, logo `(?<!\d)` não bloqueia). Precisamos de um IBAN pattern que reconheça espaços ou de um guard adicional.
-4. **Detecção de nomes brasileiros** (opt-in via `PII_GUARD_DETECT_NAMES=true` ou `--detect-names`) — Usar top ~1.500 primeiros nomes + ~300 sobrenomes do Censo IBGE 2010 (cobertura ~95% da população). Implementação: `frozenset` + tokenização por espaço/pontuação + lookup O(1). Score: 0.58 (primeiro nome isolado) → 0.65 (sobrenome) → 0.72 (primeiro + sobrenome consecutivos). Não ativa por default (muitas palavras comuns são nomes). Função separada `detect_names()` chamada dentro de `detect()` quando habilitado. Dados: baixar do IBGE via API ou Censo 2010 SIDRA.
-5. **Falsos positivos de código de barras** (Bloco 9) — `BR_PIS_PASEP` e `BR_PHONE` casam dentro de sequências de código de barras. Investigar guards adicionais.
+2. **CNPJ leniency** (opt-in via `PII_GUARD_LENIENT`) — CNPJs sintéticos/com checksum inválido (`11.222.333/0001-00`) passam sem máscara. Mesmo env var do CPF lenient.
+3. **IBAN falso positivo** — `DE89 3704 0044 0532 0130 00` gera hit `BR_PHONE` no span interno. Corrigido com novo PatternEntry IBAN espaçado (score 0.90 supera BR_PHONE 0.76).
+4. **Detecção de nomes brasileiros** (opt-in via `PII_GUARD_DETECT_NAMES=true` ou `--detect-names`) — frozenset IBGE 2010, scoring por tier: 0.58/0.65/0.72. Função separada `_find_name_hits()`.
+5. **Falsos positivos de código de barras** — BR_BOLETO pattern (score 0.92) supera BR_PIS_PASEP (0.91) e BR_PHONE (0.76) via overlap logic.
 **Requirements:** TBD
-**Plans:** 0 plans
+**Plans:** 4 plans
 
 Plans:
-- [ ] TBD (promote with /gsd-review-backlog when ready)
+- [ ] 999.5-01-PLAN.md — Create privguard/data/ name files and pyproject.toml package-data wiring
+- [ ] 999.5-02-PLAN.md — Apply four regex/constant fixes to detection.py (CEP, IBAN, BR_BOLETO, CNPJ leniency)
+- [ ] 999.5-03-PLAN.md — Implement name detection (_find_name_hits, detect_names kwarg, --detect-names CLI flag)
+- [ ] 999.5-04-PLAN.md — Append 14 regression tests for all 5 detection gaps to tests/test_detection.py
 
 ## Progress
 
