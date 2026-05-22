@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import os
 import re
 from dataclasses import dataclass
 from typing import Callable
@@ -194,7 +195,21 @@ PATTERNS: list[PatternEntry] = [
 ]
 
 
-def detect(text: str, min_score: float = 0.6) -> list[Hit]:
+def _lenient_default() -> bool:
+    return os.environ.get("PII_GUARD_LENIENT", "").lower() in ("1", "true", "yes")
+
+
+_LENIENT_KINDS: frozenset[str] = frozenset({"BR_CPF"})
+
+_LENIENT_SCORES: dict[str, float] = {"BR_CPF": 0.75}
+
+
+def detect(
+    text: str,
+    min_score: float = 0.6,
+    lenient: bool | None = None,
+) -> list[Hit]:
+    use_lenient = _lenient_default() if lenient is None else lenient
     raw: list[Hit] = []
     for entry in PATTERNS:
         for m in entry.regex.finditer(text):
@@ -204,6 +219,15 @@ def detect(text: str, min_score: float = 0.6) -> list[Hit]:
             # same span (e.g. BR_CPF failing checksum would block BR_CNH
             # and BR_PIS_PASEP from the same 11-digit value).
             if entry.validator and not entry.validator(value):
+                if use_lenient and entry.kind in _LENIENT_KINDS:
+                    # Formatted-only guard: bare 11-digit CPF must stay strict
+                    # to avoid shadowing BR_CNH and BR_PIS_PASEP on same span.
+                    if "." in value and "-" in value:
+                        raw.append(Hit(
+                            entry.kind, m.start(), m.end(), value,
+                            _LENIENT_SCORES[entry.kind],
+                            "lenient_pattern",
+                        ))
                 continue
             raw.append(Hit(entry.kind, m.start(), m.end(), value,
                            entry.score, entry.reason_code))
@@ -218,8 +242,12 @@ def detect(text: str, min_score: float = 0.6) -> list[Hit]:
     return kept
 
 
-def analyze_text(text: str, min_score: float = 0.6) -> DetectionReport:
-    hits = tuple(detect(text, min_score=min_score))
+def analyze_text(
+    text: str,
+    min_score: float = 0.6,
+    lenient: bool | None = None,
+) -> DetectionReport:
+    hits = tuple(detect(text, min_score=min_score, lenient=lenient))
     counts: dict[str, int] = {}
     for hit in hits:
         counts[hit.kind] = counts.get(hit.kind, 0) + 1
