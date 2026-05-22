@@ -34,9 +34,14 @@ def cmd_info(_args: argparse.Namespace) -> int:
 
 
 def _read_text(args: argparse.Namespace) -> str:
-    if getattr(args, "text", None) is not None:
-        return args.text
-    return sys.stdin.read()
+    text = getattr(args, "text", None)
+    if text is None:
+        return sys.stdin.read()
+    import os
+    if os.path.isfile(text):
+        with open(text, encoding="utf-8") as fh:
+            return fh.read()
+    return text
 
 
 def cmd_scan(args: argparse.Namespace) -> int:
