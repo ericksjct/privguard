@@ -187,7 +187,7 @@ Plans:
 4. **Detecção de nomes brasileiros** (opt-in via `PII_GUARD_DETECT_NAMES=true` ou `--detect-names`) — frozenset IBGE 2010, scoring por tier: 0.58/0.65/0.72. Função separada `_find_name_hits()`.
 5. **Falsos positivos de código de barras** — BR_BOLETO pattern (score 0.92) supera BR_PIS_PASEP (0.91) e BR_PHONE (0.76) via overlap logic.
 **Requirements:** TBD
-**Plans:** 4 plans
+**Plans:** 0/4 plans executed
 
 Plans:
 - [ ] 999.5-01-PLAN.md — Create privguard/data/ name files and pyproject.toml package-data wiring
