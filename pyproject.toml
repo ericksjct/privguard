@@ -30,6 +30,9 @@ privguard-pre-tool    = "privguard.hooks:main_pre_tool"
 [tool.setuptools.packages.find]
 include = ["privguard"]
 
+[tool.setuptools.package-data]
+privguard = ["data/*"]
+
 [tool.privguard.cleanup]
 # A trailing "/" means "directory tree, recursive".
 # No trailing "/" means glob-style basename match (fnmatch syntax).
