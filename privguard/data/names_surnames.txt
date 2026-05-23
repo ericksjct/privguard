@@ -1,0 +1,26 @@
+# Common Brazilian surnames (curated from public domain sources)
+silva
+santos
+oliveira
+souza
+rodrigues
+ferreira
+alves
+lima
+pereira
+gomes
+costa
+ribeiro
+martins
+carvalho
+almeida
+melo
+barbosa
+cardoso
+xavier
+monteiro
+cunha
+pinto
+mendes
+rocha
+dantas
