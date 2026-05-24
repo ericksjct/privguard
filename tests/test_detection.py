@@ -517,3 +517,138 @@ def test_boleto_hyphen_format_detected() -> None:
     """Hyphen-check printed boleto format must be detected as BR_BOLETO."""
     hits = detection.detect("83660000000-0 04960019073-3 30190105042-2 31239010103-4")
     assert any(h.kind == "BR_BOLETO" for h in hits), "hyphen-check boleto not detected"
+
+
+# ---------------------------------------------------------------------------
+# Phase 999.5: Detection Hardening v2 — canonical test names (plan 04)
+# ---------------------------------------------------------------------------
+
+# Gap 1: CEP dot-variant
+
+def test_cep_standard_still_detected() -> None:
+    """BR_CEP regression: standard format must still work after dot-variant fix."""
+    from privguard.detection import detect
+    hits = detect("CEP 01310-200")
+    kinds = [h.kind for h in hits]
+    assert "BR_CEP" in kinds
+
+
+# Gap 2: CNPJ leniency
+
+def test_lenient_cnpj_formatted_detected() -> None:
+    """detect('11.222.333/0001-00', lenient=True) returns BR_CNPJ hit."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("11.222.333/0001-00", lenient=True)
+    kinds = [h.kind for h in hits]
+    assert "BR_CNPJ" in kinds, "lenient=True must detect formatted CNPJ with invalid checksum"
+
+
+def test_lenient_cnpj_bare_stays_strict() -> None:
+    """Bare 14-digit CNPJ must NOT be emitted as lenient hit (format guard, D-03)."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("11222333000100", lenient=True)
+    kinds = [h.kind for h in hits]
+    assert "BR_CNPJ" not in kinds, "bare 14-digit CNPJ must stay strict in lenient mode"
+
+
+def test_lenient_cnpj_has_lower_score() -> None:
+    """Lenient CNPJ score must be below the strict score (0.95)."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detect("11.222.333/0001-00", lenient=True)
+    cnpj_hits = [h for h in hits if h.kind == "BR_CNPJ"]
+    assert cnpj_hits, "lenient CNPJ hit must exist"
+    assert cnpj_hits[0].score < 0.95, f"lenient score must be < 0.95, got {cnpj_hits[0].score}"
+
+
+# Gap 3: IBAN space-separated false positive fix
+
+def test_iban_spaced_detected_not_phone() -> None:
+    """Space-separated IBAN must emit IBAN hit, not BR_PHONE."""
+    from privguard.detection import detect
+    hits = detect("DE89 3704 0044 0532 0130 00")
+    kinds = [h.kind for h in hits]
+    assert "IBAN" in kinds, "space-separated IBAN must be detected"
+    assert "BR_PHONE" not in kinds, "BR_PHONE must not appear when IBAN wins overlap"
+
+
+# Gap 5: Boleto barcode false positive suppression
+
+def test_boleto_raw_detected() -> None:
+    """Raw 44-47 digit barcode must be classified as BR_BOLETO."""
+    from privguard.detection import detect
+    hits = detect("83660000000004960019073330190105042231239010103400")
+    kinds = [h.kind for h in hits]
+    assert "BR_BOLETO" in kinds, "raw 44-47 digit sequence must be detected as BR_BOLETO"
+
+
+def test_boleto_wins_over_pis() -> None:
+    """BR_BOLETO must suppress inner BR_PIS_PASEP hits via overlap logic."""
+    from privguard.detection import detect
+    hits = detect("83660000000004960019073330190105042231239010103400")
+    kinds = [h.kind for h in hits]
+    assert "BR_PIS_PASEP" not in kinds, "BR_PIS_PASEP must not appear inside a boleto span"
+
+
+# Gap 4: Brazilian name detection (opt-in)
+
+def test_name_detection_off_by_default() -> None:
+    """detect('Maria Silva') with no flag or env var returns no BR_NAME hit."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_DETECT_NAMES", None)
+    hits = detect("Maria Silva")
+    kinds = [h.kind for h in hits]
+    assert "BR_NAME" not in kinds, "name detection must be off by default"
+
+
+def test_name_detection_first_plus_surname() -> None:
+    """detect('Maria Silva', detect_names=True) returns BR_NAME at score 0.72."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_DETECT_NAMES", None)
+    hits = detect("Maria Silva", detect_names=True)
+    name_hits = [h for h in hits if h.kind == "BR_NAME"]
+    assert name_hits, "first+surname must emit BR_NAME hit"
+    assert name_hits[0].score == 0.72, f"full-name score must be 0.72, got {name_hits[0].score}"
+    assert name_hits[0].reason_code == "name_fullname"
+
+
+def test_name_detection_first_only_score() -> None:
+    """First name alone emits score 0.58 with reason_code 'name_first'."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_DETECT_NAMES", None)
+    hits = detect("Maria foi ao mercado", detect_names=True)
+    name_hits = [h for h in hits if h.kind == "BR_NAME" and h.reason_code == "name_first"]
+    assert name_hits, "isolated first name must emit name_first hit"
+    assert name_hits[0].score == 0.58, f"first-name score must be 0.58, got {name_hits[0].score}"
+
+
+def test_name_detection_surname_only_score() -> None:
+    """Surname alone emits score 0.65 with reason_code 'name_surname'."""
+    from privguard.detection import detect
+    import os
+    os.environ.pop("PII_GUARD_DETECT_NAMES", None)
+    hits = detect("Silva compareceu", detect_names=True)
+    name_hits = [h for h in hits if h.kind == "BR_NAME" and h.reason_code == "name_surname"]
+    assert name_hits, "isolated surname must emit name_surname hit"
+    assert name_hits[0].score == 0.65, f"surname score must be 0.65, got {name_hits[0].score}"
+
+
+def test_name_detection_env_var() -> None:
+    """PII_GUARD_DETECT_NAMES=true activates name detection without explicit flag."""
+    from privguard.detection import detect
+    import os
+    os.environ["PII_GUARD_DETECT_NAMES"] = "true"
+    try:
+        hits = detect("Maria Silva")
+        kinds = [h.kind for h in hits]
+        assert "BR_NAME" in kinds, "env var must activate name detection"
+    finally:
+        os.environ.pop("PII_GUARD_DETECT_NAMES", None)
