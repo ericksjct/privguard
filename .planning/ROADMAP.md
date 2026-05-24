@@ -187,13 +187,13 @@ Plans:
 4. **Detecção de nomes brasileiros** (opt-in via `PII_GUARD_DETECT_NAMES=true` ou `--detect-names`) — frozenset IBGE 2010, scoring por tier: 0.58/0.65/0.72. Função separada `_find_name_hits()`.
 5. **Falsos positivos de código de barras** — BR_BOLETO pattern (score 0.92) supera BR_PIS_PASEP (0.91) e BR_PHONE (0.76) via overlap logic.
 **Requirements:** TBD
-**Plans:** 0/4 plans executed
+**Plans:** 4/4 plans complete
 
 Plans:
-- [ ] 999.5-01-PLAN.md — Create privguard/data/ name files and pyproject.toml package-data wiring
-- [ ] 999.5-02-PLAN.md — Apply four regex/constant fixes to detection.py (CEP, IBAN, BR_BOLETO, CNPJ leniency)
-- [ ] 999.5-03-PLAN.md — Implement name detection (_find_name_hits, detect_names kwarg, --detect-names CLI flag)
-- [ ] 999.5-04-PLAN.md — Append 14 regression tests for all 5 detection gaps to tests/test_detection.py
+- [x] 999.5-01-PLAN.md — Create privguard/data/ name files and pyproject.toml package-data wiring
+- [x] 999.5-02-PLAN.md — Apply four regex/constant fixes to detection.py (CEP, IBAN, BR_BOLETO, CNPJ leniency)
+- [x] 999.5-03-PLAN.md — Implement name detection (_find_name_hits, detect_names kwarg, --detect-names CLI flag)
+- [x] 999.5-04-PLAN.md — Append 14 regression tests for all 5 detection gaps to tests/test_detection.py
 
 ## Progress
 
