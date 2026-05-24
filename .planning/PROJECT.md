@@ -29,7 +29,7 @@ No sensitive Brazilian or company data should be sent to external LLM providers 
 
 ### Active
 
-
+- ✓ Phase 999.5 validated detection hardening v2: CEP dot-variant, formatted-only CNPJ leniency (bare stays strict), spaced IBAN false-positive fix, BR_BOLETO barcode suppression (score 0.92), and opt-in Brazilian name detection (`detect_names=True` / `PII_GUARD_DETECT_NAMES=true`) — Phase 999.5 Detection Hardening v2
 
 ### Out of Scope
 
