@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+import functools
 import os
 import re
 from dataclasses import dataclass
+from importlib.resources import files as _importlib_files
 from typing import Callable
 
 
@@ -215,8 +217,64 @@ PATTERNS: list[PatternEntry] = [
 ]
 
 
+_NAMES_DATA = _importlib_files("privguard") / "data"
+
+_TOKEN_RE = re.compile(r"[^\W\d_]+", re.UNICODE)
+
+
+@functools.lru_cache(maxsize=1)
+def _load_name_sets() -> tuple[frozenset[str], frozenset[str]]:
+    first = frozenset(
+        n.strip().lower()
+        for n in (_NAMES_DATA / "names_first.txt").read_text(encoding="utf-8").splitlines()
+        if n.strip() and not n.startswith("#")
+    )
+    surns = frozenset(
+        n.strip().lower()
+        for n in (_NAMES_DATA / "names_surnames.txt").read_text(encoding="utf-8").splitlines()
+        if n.strip() and not n.startswith("#")
+    )
+    return first, surns
+
+
 def _lenient_default() -> bool:
     return os.environ.get("PII_GUARD_LENIENT", "").lower() in ("1", "true", "yes")
+
+
+def _detect_names_default() -> bool:
+    return os.environ.get("PII_GUARD_DETECT_NAMES", "").lower() in ("1", "true", "yes")
+
+
+def _find_name_hits(text: str) -> list[Hit]:
+    first_names, surnames = _load_name_sets()
+    tokens: list[tuple[str, int, int]] = [
+        (m.group(0).lower(), m.start(), m.end())
+        for m in _TOKEN_RE.finditer(text)
+    ]
+    hits: list[Hit] = []
+    i = 0
+    while i < len(tokens):
+        tok, ts, te = tokens[i]
+        is_first = tok in first_names
+        is_surn = tok in surnames
+        if is_first and i + 1 < len(tokens):
+            ntok, nts, nte = tokens[i + 1]
+            if ntok in surnames:
+                hits.append(Hit("BR_NAME", ts, nte, text[ts:nte], 0.72, "name_fullname"))
+                i += 2
+                continue
+        if is_surn and i + 1 < len(tokens):
+            ntok, nts, nte = tokens[i + 1]
+            if ntok in first_names:
+                hits.append(Hit("BR_NAME", ts, nte, text[ts:nte], 0.72, "name_fullname"))
+                i += 2
+                continue
+        if is_first:
+            hits.append(Hit("BR_NAME", ts, te, text[ts:te], 0.58, "name_first"))
+        elif is_surn:
+            hits.append(Hit("BR_NAME", ts, te, text[ts:te], 0.65, "name_surname"))
+        i += 1
+    return hits
 
 
 _LENIENT_KINDS: frozenset[str] = frozenset({"BR_CPF", "BR_CNPJ"})
@@ -228,8 +286,10 @@ def detect(
     text: str,
     min_score: float = 0.6,
     lenient: bool | None = None,
+    detect_names: bool | None = None,
 ) -> list[Hit]:
     use_lenient = _lenient_default() if lenient is None else lenient
+    use_detect_names = _detect_names_default() if detect_names is None else detect_names
     raw: list[Hit] = []
     for entry in PATTERNS:
         for m in entry.regex.finditer(text):
@@ -253,6 +313,8 @@ def detect(
                            entry.score, entry.reason_code))
 
     raw = [h for h in raw if h.score >= min_score]
+    if use_detect_names:
+        raw.extend(_find_name_hits(text))
     raw.sort(key=lambda h: (-h.score, -(h.end - h.start), h.start))
     kept: list[Hit] = []
     for h in raw:
@@ -266,8 +328,9 @@ def analyze_text(
     text: str,
     min_score: float = 0.6,
     lenient: bool | None = None,
+    detect_names: bool | None = None,
 ) -> DetectionReport:
-    hits = tuple(detect(text, min_score=min_score, lenient=lenient))
+    hits = tuple(detect(text, min_score=min_score, lenient=lenient, detect_names=detect_names))
     counts: dict[str, int] = {}
     for hit in hits:
         counts[hit.kind] = counts.get(hit.kind, 0) + 1

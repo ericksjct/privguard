@@ -46,7 +46,8 @@ def _read_text(args: argparse.Namespace) -> str:
 
 def cmd_scan(args: argparse.Namespace) -> int:
     lenient = True if args.lenient else None
-    report = analyze_text(_read_text(args), lenient=lenient)
+    detect_names = True if args.detect_names else None
+    report = analyze_text(_read_text(args), lenient=lenient, detect_names=detect_names)
     if args.json:
         print(to_json(report))
     else:
@@ -62,7 +63,8 @@ def cmd_mask(args: argparse.Namespace) -> int:
       2 — masking unverified; output goes to stderr only; do NOT forward.
     """
     lenient = True if args.lenient else None
-    result = mask_text(_read_text(args), lenient=lenient)
+    detect_names = True if args.detect_names else None
+    result = mask_text(_read_text(args), lenient=lenient, detect_names=detect_names)
     if not result.verified:
         if args.json:
             print(to_json(result), file=sys.stderr)
@@ -83,7 +85,8 @@ def cmd_mask(args: argparse.Namespace) -> int:
 def cmd_policy_check(args: argparse.Namespace) -> int:
     text = _read_text(args)
     lenient = True if args.lenient else None
-    hits = detect(text, lenient=lenient)
+    detect_names = True if args.detect_names else None
+    hits = detect(text, lenient=lenient, detect_names=detect_names)
     mask_result = mask_text(text, hits=hits) if args.masked else None
     path_classification = classify_path(args.path) if args.path else None
     decision = decide_policy(
@@ -134,6 +137,12 @@ def main(argv: list[str] | None = None) -> int:
         default=False,
         help="Mask DDD.DDD.DDD-DD CPF patterns regardless of checksum (opt-in).",
     )
+    scan.add_argument(
+        "--detect-names",
+        action="store_true",
+        default=False,
+        help="Detect Brazilian person names using IBGE 2010 census data (opt-in).",
+    )
     scan.set_defaults(func=cmd_scan)
 
     mask = subparsers.add_parser("mask")
@@ -144,6 +153,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         default=False,
         help="Mask DDD.DDD.DDD-DD CPF patterns regardless of checksum (opt-in).",
+    )
+    mask.add_argument(
+        "--detect-names",
+        action="store_true",
+        default=False,
+        help="Detect Brazilian person names using IBGE 2010 census data (opt-in).",
     )
     mask.set_defaults(func=cmd_mask)
 
@@ -162,6 +177,12 @@ def main(argv: list[str] | None = None) -> int:
         action="store_true",
         default=False,
         help="Mask DDD.DDD.DDD-DD CPF patterns regardless of checksum (opt-in).",
+    )
+    policy.add_argument(
+        "--detect-names",
+        action="store_true",
+        default=False,
+        help="Detect Brazilian person names using IBGE 2010 census data (opt-in).",
     )
     policy.set_defaults(func=cmd_policy_check)
 
