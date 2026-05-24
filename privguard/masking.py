@@ -56,6 +56,7 @@ def verify_mask(
     masked_text: str,
     hits: Sequence[Hit],
     min_score: float = 0.6,
+    detect_names: bool | None = None,
 ) -> tuple[bool, tuple[str, ...]]:
     reason_codes: list[str] = []
 
@@ -64,7 +65,7 @@ def verify_mask(
             reason_codes.append("original_value_remaining")
 
     residual_hits = [
-        hit for hit in detect(masked_text, min_score=min_score)
+        hit for hit in detect(masked_text, min_score=min_score, detect_names=detect_names)
         if not _is_safe_placeholder_residual(hit.value)
     ]
     if residual_hits:
@@ -96,6 +97,7 @@ def mask_text(
         masked_text,
         selected_hits,
         min_score=min_score,
+        detect_names=detect_names,
     )
     hit_reasons = tuple(hit.reason_code for hit in selected_hits if hit.reason_code)
     reason_codes = tuple(dict.fromkeys((*hit_reasons, *verification_reasons)))
