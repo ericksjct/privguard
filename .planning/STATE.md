@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: context exhaustion at 90% (2026-05-24)
-last_updated: "2026-05-24T16:57:53.747Z"
+stopped_at: Phase 8 context gathered
+last_updated: "2026-05-24T18:04:47.199Z"
 last_activity: 2026-05-24
 progress:
-  total_phases: 12
+  total_phases: 13
   completed_phases: 11
   total_plans: 30
   completed_plans: 30
@@ -89,6 +89,10 @@ Recent decisions affecting current work:
 - [Phase 03]: Phase 03 output hygiene is locked by a shared forbidden-output pytest gate across prompt, tool, command, and doctor surfaces.
 - [Phase 03]: No pytest config was added because tests-path collection already avoids inaccessible local cache directories.
 
+### Roadmap Evolution
+
+- Phase 8 added: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
+
 ### Pending Todos
 
 None yet.
@@ -111,6 +115,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-24T16:28:40.566Z
-Stopped at: context exhaustion at 90% (2026-05-24)
-Resume file: None
+Last session: 2026-05-24T18:04:47.194Z
+Stopped at: Phase 8 context gathered
+Resume file: .planning/phases/08-eu-quero-que-o-usu-rio-possa-escolher-se-ele-quer-rodar-o-ho/08-CONTEXT.md
