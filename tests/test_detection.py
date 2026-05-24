@@ -620,13 +620,14 @@ def test_name_detection_first_plus_surname() -> None:
 
 
 def test_name_detection_first_only_score() -> None:
-    """First name alone emits score 0.58 with reason_code 'name_first'."""
+    """First name alone emits score 0.58; requires min_score<=0.58 to surface."""
     from privguard.detection import detect
     import os
     os.environ.pop("PII_GUARD_DETECT_NAMES", None)
-    hits = detect("Maria foi ao mercado", detect_names=True)
+    # Score 0.58 is below default min_score=0.6; lower the threshold to observe the hit.
+    hits = detect("Maria foi ao mercado", detect_names=True, min_score=0.5)
     name_hits = [h for h in hits if h.kind == "BR_NAME" and h.reason_code == "name_first"]
-    assert name_hits, "isolated first name must emit name_first hit"
+    assert name_hits, "isolated first name must emit name_first hit when min_score<=0.58"
     assert name_hits[0].score == 0.58, f"first-name score must be 0.58, got {name_hits[0].score}"
 
 

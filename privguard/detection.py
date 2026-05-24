@@ -312,9 +312,9 @@ def detect(
             raw.append(Hit(entry.kind, m.start(), m.end(), value,
                            entry.score, entry.reason_code))
 
-    raw = [h for h in raw if h.score >= min_score]
     if use_detect_names:
         raw.extend(_find_name_hits(text))
+    raw = [h for h in raw if h.score >= min_score]
     raw.sort(key=lambda h: (-h.score, -(h.end - h.start), h.start))
     kept: list[Hit] = []
     for h in raw:
