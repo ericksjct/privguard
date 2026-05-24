@@ -171,13 +171,27 @@ PATTERNS: list[PatternEntry] = [
     PatternEntry("BR_CNH", re.compile(r"\b\d{11}\b"), 0.93, valida_cnh, "checksum_valid"),
     PatternEntry("BR_TITULO_ELEITOR", re.compile(r"\b(?:\d{4}\s\d{4}\s\d{4}|\d{12})\b"), 0.92, valida_titulo_eleitor, "checksum_valid"),
     PatternEntry("BR_PIS_PASEP", re.compile(r"\b(?:\d{3}\.\d{5}\.\d{2}-\d|\d{11})\b"), 0.91, valida_pis, "checksum_valid"),
+    PatternEntry(
+        "BR_BOLETO",
+        re.compile(
+            r"(?:"
+            r"\b\d{44,50}\b"
+            r"|\b\d{5}\.\d{5}\s\d{5}\.\d{6}\s\d{5}\.\d{6}\s\d\s\d{14}\b"
+            r"|\b\d{11}-\d(?:\s\d{11}-\d){3}\b"
+            r")"
+        ),
+        0.92,
+        None,
+        "barcode_boleto",
+    ),
     PatternEntry("BR_CARTAO_SUS", re.compile(r"\b(?:\d{3}\s\d{4}\s\d{4}\s\d{4}|\d{15})\b"), 0.94, valida_cartao_sus, "checksum_valid"),
     PatternEntry("CREDIT_CARD", re.compile(r"\b(?:\d{4}[-\s]?){3}\d{4}\b"), 0.85, valida_luhn, "checksum_valid"),
     PatternEntry("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]{2,}\b"), 0.95),
     PatternEntry("IBAN", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{12,30}\b"), 0.90),
+    PatternEntry("IBAN", re.compile(r"\b[A-Z]{2}\d{2}(?:\s[A-Z0-9]{4}){3,}(?:\s[A-Z0-9]{1,4})?\b"), 0.90),
     PatternEntry("BR_RG", re.compile(r"\b\d{1,2}\.\d{3}\.\d{3}-[\dXx]\b"), 0.78),
     PatternEntry("BR_PHONE", re.compile(r"(?<!\d)(?:\+55\s?)?\(?\d{2}\)?\s?(?:9[\s-]?\d{4}|[2-5]\d{3})[\s-]?\d{4}\b"), 0.76),
-    PatternEntry("BR_CEP", re.compile(r"\b\d{5}-?\d{3}\b"), 0.72),
+    PatternEntry("BR_CEP", re.compile(r"\b(?:\d{2}\.\d{3}|\d{5})-?\d{3}\b"), 0.72),
     PatternEntry("BR_PLACA_MERCOSUL", re.compile(r"\b[A-Z]{3}\d[A-Z]\d{2}\b"), 0.85),
     PatternEntry("BR_PLACA_OLD", re.compile(r"\b[A-Z]{3}-?\d{4}(?![-\d])\b"), 0.80),
     PatternEntry("DATABASE_URL", re.compile(r"\b(?:postgres(?:ql)?|mysql|mariadb|mongodb(?:\+srv)?|redis)://[^\s'\"<>]+", re.IGNORECASE), 0.99, None, "database_url"),
@@ -205,9 +219,9 @@ def _lenient_default() -> bool:
     return os.environ.get("PII_GUARD_LENIENT", "").lower() in ("1", "true", "yes")
 
 
-_LENIENT_KINDS: frozenset[str] = frozenset({"BR_CPF"})
+_LENIENT_KINDS: frozenset[str] = frozenset({"BR_CPF", "BR_CNPJ"})
 
-_LENIENT_SCORES: dict[str, float] = {"BR_CPF": 0.75}
+_LENIENT_SCORES: dict[str, float] = {"BR_CPF": 0.75, "BR_CNPJ": 0.75}
 
 
 def detect(

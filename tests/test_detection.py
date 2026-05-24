@@ -433,3 +433,87 @@ def test_address_no_keyword_not_detected() -> None:
     """Address without a street type keyword must NOT be detected as BR_ADDRESS."""
     hits = detection.detect("numero 123 do bloco B")
     assert not any(h.kind == "BR_ADDRESS" for h in hits)
+
+
+# --- Phase 999.5: Detection Hardening v2 — Gap 1 CEP dot-variant ---
+
+def test_cep_dot_variant_detected() -> None:
+    """CEP in dot-variant format '14.025-580' must be detected as BR_CEP."""
+    hits = detection.detect("CEP 14.025-580 do cliente")
+    assert any(h.kind == "BR_CEP" for h in hits), "dot-variant CEP 14.025-580 not detected"
+
+
+def test_cep_standard_format_regression() -> None:
+    """Standard CEP '01310-200' must still be detected (regression)."""
+    hits = detection.detect("CEP 01310-200")
+    assert any(h.kind == "BR_CEP" for h in hits), "standard CEP 01310-200 broken"
+
+
+def test_cep_bare_format_regression() -> None:
+    """Bare 8-digit CEP '01310200' must still be detected (regression)."""
+    hits = detection.detect("CEP 01310200")
+    assert any(h.kind == "BR_CEP" for h in hits), "bare 8-digit CEP 01310200 broken"
+
+
+# --- Phase 999.5: Detection Hardening v2 — Gap 2 CNPJ leniency ---
+
+def test_cnpj_lenient_formatted_detected() -> None:
+    """detect('11.222.333/0001-00', lenient=True) must return BR_CNPJ hit."""
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detection.detect("11.222.333/0001-00", lenient=True)
+    assert any(h.kind == "BR_CNPJ" for h in hits), "lenient formatted CNPJ not detected"
+
+
+def test_cnpj_lenient_bare_stays_strict() -> None:
+    """detect('11222333000100', lenient=True) must NOT return BR_CNPJ hit (format guard, D-03)."""
+    import os
+    os.environ.pop("PII_GUARD_LENIENT", None)
+    hits = detection.detect("11222333000100", lenient=True)
+    assert not any(h.kind == "BR_CNPJ" for h in hits), "bare 14-digit CNPJ should stay strict (D-03)"
+
+
+# --- Phase 999.5: Detection Hardening v2 — Gap 3 IBAN space-separated ---
+
+def test_iban_spaced_detected() -> None:
+    """Space-separated IBAN 'DE89 3704 0044 0532 0130 00' must be detected as IBAN."""
+    hits = detection.detect("DE89 3704 0044 0532 0130 00")
+    kinds = {h.kind for h in hits}
+    assert "IBAN" in kinds, "spaced IBAN not detected"
+
+
+def test_iban_spaced_no_br_phone_false_positive() -> None:
+    """Space-separated IBAN must not trigger BR_PHONE false positive."""
+    hits = detection.detect("DE89 3704 0044 0532 0130 00")
+    kinds = {h.kind for h in hits}
+    assert "BR_PHONE" not in kinds, "BR_PHONE false positive still present on spaced IBAN"
+
+
+# --- Phase 999.5: Detection Hardening v2 — Gap 5 BR_BOLETO ---
+
+def test_boleto_raw_barcode_detected() -> None:
+    """Raw 47-digit boleto barcode must be detected as BR_BOLETO."""
+    hits = detection.detect("83660000000004960019073330190105042231239010103400")
+    kinds = {h.kind for h in hits}
+    assert "BR_BOLETO" in kinds, "raw boleto barcode not detected"
+
+
+def test_boleto_raw_barcode_no_pis_pasep_false_positive() -> None:
+    """BR_PIS_PASEP must not fire inside a boleto barcode span."""
+    hits = detection.detect("83660000000004960019073330190105042231239010103400")
+    kinds = {h.kind for h in hits}
+    assert "BR_PIS_PASEP" not in kinds, "BR_PIS_PASEP still firing inside boleto barcode"
+
+
+def test_boleto_score_beats_pis_and_phone() -> None:
+    """BR_BOLETO score must be 0.92 (> BR_PIS_PASEP 0.91, > BR_PHONE 0.76)."""
+    hits = detection.detect("83660000000004960019073330190105042231239010103400")
+    boleto_hits = [h for h in hits if h.kind == "BR_BOLETO"]
+    assert boleto_hits, "expected BR_BOLETO hit"
+    assert boleto_hits[0].score == 0.92, f"BR_BOLETO score must be 0.92, got {boleto_hits[0].score}"
+
+
+def test_boleto_hyphen_format_detected() -> None:
+    """Hyphen-check printed boleto format must be detected as BR_BOLETO."""
+    hits = detection.detect("83660000000-0 04960019073-3 30190105042-2 31239010103-4")
+    assert any(h.kind == "BR_BOLETO" for h in hits), "hyphen-check boleto not detected"
