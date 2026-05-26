@@ -30,6 +30,7 @@ No sensitive Brazilian or company data should be sent to external LLM providers 
 ### Active
 
 - ✓ Phase 999.5 validated detection hardening v2: CEP dot-variant, formatted-only CNPJ leniency (bare stays strict), spaced IBAN false-positive fix, BR_BOLETO barcode suppression (score 0.92), and opt-in Brazilian name detection (`detect_names=True` / `PII_GUARD_DETECT_NAMES=true`) — Phase 999.5 Detection Hardening v2
+- ✓ Phase 8 validated hook mode selector: `PII_GUARD_MODE=mask` blocks prompts with PII while writing the masked version to stderr for manual resubmission; `scrub` mode deprecated (falls through to block with one-line notice); `main_pre_tool()` LLM orchestration check is now mode-aware (warn passes, mask/block both deny) — Phase 8 Hook Mode Selector
 
 ### Out of Scope
 
@@ -91,4 +92,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-21 after Phase 999.4 completion*
+*Last updated: 2026-05-25 after Phase 8 completion*
