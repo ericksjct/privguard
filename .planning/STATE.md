@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 8 context gathered
-last_updated: "2026-05-24T18:04:47.199Z"
-last_activity: 2026-05-24
+stopped_at: Completed 08-01-PLAN.md
+last_updated: "2026-05-26T01:57:46.015Z"
+last_activity: 2026-05-26
 progress:
   total_phases: 13
   completed_phases: 11
-  total_plans: 30
-  completed_plans: 30
-  percent: 100
+  total_plans: 32
+  completed_plans: 31
+  percent: 97
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Project:** privguard
 **Core value:** No sensitive Brazilian or company data should be sent to external LLM providers in clear text.
-**Current focus:** Phase 999.5 — detection-hardening-v2
+**Current focus:** Phase 08 — eu-quero-que-o-usu-rio-possa-escolher-se-ele-quer-rodar-o-ho
 
 ## Current Position
 
-Phase: 999.5
-Plan: Not started
-Status: Executing Phase 999.5
-Last activity: 2026-05-24
+Phase: 08 (eu-quero-que-o-usu-rio-possa-escolher-se-ele-quer-rodar-o-ho) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-05-26
 
 Progress: [██████████] 100%
 
@@ -67,6 +67,7 @@ Progress: [██████████] 100%
 | Phase 01-package-foundation P04 | 3min | 2 tasks | 9 files |
 | Phase 01-package-foundation P03 | 4min | 2 tasks | 5 files |
 | Phase 03 P04 | 2min | 3 tasks | 1 files |
+| Phase 08 P01 | 18 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -88,6 +89,9 @@ Recent decisions affecting current work:
 - [Phase 01-package-foundation]: Plan 01-03 added repo-root path setup in hook adapters so direct hooks/*.py execution can import privguard.
 - [Phase 03]: Phase 03 output hygiene is locked by a shared forbidden-output pytest gate across prompt, tool, command, and doctor surfaces.
 - [Phase 03]: No pytest config was added because tests-path collection already avoids inaccessible local cache directories.
+- [Phase 08]: mask mode always exits 2 — no prompt-replacement field in Claude Code v2.1.150 UserPromptSubmit schema; block+show-masked is the only safe path (D-01)
+- [Phase 08]: scrub branch replaced by one-line stderr notice falling through to default block; scrub_unsupported reason code removed
+- [Phase 08]: _prompt_diagnostic must not receive mode= kwarg in protective (exit 2) paths; mode_scope=local_development_non_protective is warn-only
 
 ### Roadmap Evolution
 
@@ -115,6 +119,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-24T18:04:47.194Z
-Stopped at: Phase 8 context gathered
-Resume file: .planning/phases/08-eu-quero-que-o-usu-rio-possa-escolher-se-ele-quer-rodar-o-ho/08-CONTEXT.md
+Last session: 2026-05-26T01:57:46.007Z
+Stopped at: Completed 08-01-PLAN.md
+Resume file: None
