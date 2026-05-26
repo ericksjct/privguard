@@ -11,6 +11,7 @@ import sys
 
 from .detection import detect
 from .diagnostics import format_hit_summary, summarize_hits, to_json
+from .masking import mask_text
 from .policy import classify_command, classify_path
 
 
@@ -203,20 +204,36 @@ def main_user_prompt() -> int:
         return 0
 
     if mode == "scrub":
-        # scrub cannot replace the original prompt via additionalContext (it only
-        # appends, leaking clear-text).  Treat scrub as block until Claude exposes
-        # a documented prompt-replacement mechanism.
-        _audit_log(event="UserPromptSubmit", action="block", reason_code="scrub_unsupported")
+        sys.stderr.write("[PII-GUARD] modo scrub removido, usando block\n")
+        # falls through to default block below
+
+    if mode == "mask":
+        mask_result = mask_text(prompt, hits=hits)
+        if not mask_result.verified:
+            _audit_log(
+                event="UserPromptSubmit",
+                action="block",
+                reason_code="mask_verification_failed",
+            )
+            sys.stderr.write(
+                "[PII-GUARD BLOQUEADO] "
+                + _prompt_diagnostic(
+                    action="block",
+                    reason_code="mask_verification_failed",
+                    hits=hits,
+                )
+                + "\n"
+            )
+            return 2
+        _audit_log(event="UserPromptSubmit", action="block", reason_code="pii_masked")
         sys.stderr.write(
             "[PII-GUARD BLOQUEADO] "
-            + _prompt_diagnostic(
-                action="block",
-                reason_code="scrub_unsupported",
-                hits=hits,
-                mode=mode,
-            )
+            + _prompt_diagnostic(action="block", reason_code="pii_masked", hits=hits)
             + "\n"
         )
+        sys.stderr.write("[PII-GUARD VERSAO MASCARADA]\n")
+        sys.stderr.write(mask_result.text + "\n")
+        sys.stderr.write("[Reenvie o prompt acima com os valores mascarados]\n")
         return 2
 
     _audit_log(event="UserPromptSubmit", action="block", reason_code="pii_detected")
