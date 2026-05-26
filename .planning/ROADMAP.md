@@ -209,3 +209,14 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 5. Synthetic Regression Gate | 1/1 | Complete | 2026-05-05 |
 | 6. Milestone Cleanup | 4/4 | Complete | 2026-05-08 |
 | 7. Project README + Repo Hygiene | 0/TBD | Not started | - |
+
+### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
+
+**Goal:** User can set `PII_GUARD_MODE=mask` to receive a blocked prompt with a sanitized masked version shown in stderr (for manual resubmission), instead of a plain block. The `scrub` mode is removed and falls through to `block` with a one-line notice.
+**Requirements**: TBD
+**Depends on:** Phase 7
+**Plans:** 2 plans
+
+Plans:
+- [ ] 08-01-PLAN.md — Add mask branch to main_user_prompt() and mode-aware inline_pii check to main_pre_tool(); remove scrub branch
+- [ ] 08-02-PLAN.md — Update test_claude_hooks.py: drop scrub from parametrize, add 5 mask mode tests
