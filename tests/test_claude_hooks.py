@@ -302,7 +302,7 @@ def test_user_prompt_invalid_threshold_uses_default_without_echo(
     assert_no_prompt_derived_text(output)
 
 
-@pytest.mark.parametrize("mode", ["warn", "scrub"])
+@pytest.mark.parametrize("mode", ["warn"])
 def test_non_blocking_prompt_modes_are_labeled_non_protective_and_sanitized(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
@@ -351,3 +351,90 @@ def test_audit_log_silently_ignores_write_failure(tmp_path: pathlib.Path) -> Non
         log_path=bad_path,
     )
     # reaching here means no exception was raised
+
+
+# ---------------------------------------------------------------------------
+# Phase 8: mask mode tests
+# ---------------------------------------------------------------------------
+
+
+def test_user_prompt_mask_mode_blocks_and_shows_masked_version(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    prompt = f"{PROMPT_SNIPPET}: CPF {RAW_CPF}"
+
+    assert run_user_prompt(monkeypatch, {"prompt": prompt}, mode="mask") == 2
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert captured.out == ""
+    assert "BLOQUEADO" in captured.err
+    assert "reason=pii_masked" in output
+    assert "VERSAO MASCARADA" in captured.err
+    assert "<BR_CPF>" in captured.err          # masked placeholder is intentional output
+    assert RAW_CPF not in output               # raw CPF must never appear
+    # Note: non-PII text (PROMPT_SNIPPET) will appear in mask_result.text — that is
+    # intentional: the masked version shows the safe version for the user to resend.
+
+
+def test_user_prompt_mask_mode_verification_failure_blocks_without_masked_text(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    from privguard.masking import MaskResult
+    from privguard import hooks
+
+    fake_result = MaskResult(
+        text=f"CPF {RAW_CPF}",   # still contains PII — verification intentionally failed
+        changed=False,
+        verified=False,
+        verification_status="failed",
+        reason_codes=("original_value_remaining",),
+        hits=(),
+    )
+    monkeypatch.setattr(hooks, "mask_text", lambda *a, **kw: fake_result)
+
+    prompt = f"{PROMPT_SNIPPET}: CPF {RAW_CPF}"
+    assert run_user_prompt(monkeypatch, {"prompt": prompt}, mode="mask") == 2
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "BLOQUEADO" in captured.err
+    assert "reason=mask_verification_failed" in output
+    assert "VERSAO MASCARADA" not in output    # must NOT show unverified masked text
+    assert RAW_CPF not in output              # raw PII must not appear even in failure path
+
+
+def test_user_prompt_mask_mode_clean_prompt_allows(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert run_user_prompt(
+        monkeypatch, {"prompt": "texto publico sem dados sensiveis"}, mode="mask"
+    ) == 0
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+
+@pytest.mark.parametrize("tool_name", ["Agent", "Task", "TaskCreate", "TaskUpdate"])
+def test_pre_tool_mask_mode_llm_orchestration_blocks_pii(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    tool_name: str,
+) -> None:
+    monkeypatch.setenv("PII_GUARD_MODE", "mask")
+    payload = {
+        "tool_name": tool_name,
+        "tool_input": {"prompt": f"{PROMPT_SNIPPET}: CPF {RAW_CPF}"},
+    }
+
+    assert run_pre_tool(monkeypatch, payload) == 2
+
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "category=llm_orchestration" in output
+    assert "reason=pii_masked" in output or "reason=mask_verification_failed" in output
+    assert_no_prompt_derived_text(output)

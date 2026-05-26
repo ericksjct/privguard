@@ -319,13 +319,37 @@ def main_pre_tool() -> int:
 
     if tool in _LLM_ORCHESTRATION_TOOLS:
         threshold = _inline_threshold()
+        mode = os.environ.get("PII_GUARD_MODE", "block")
         for text in _iter_text_values(tool_input):
-            if detect(text, min_score=threshold):
+            hits = list(detect(text, min_score=threshold))
+            if not hits:
+                continue
+            if mode == "warn":
+                # Non-protective pass-through for local development.
+                continue
+            if mode == "mask":
+                mask_result = mask_text(text, hits=hits)
+                if not mask_result.verified:
+                    return _deny_pre_tool(
+                        reason_code="mask_verification_failed",
+                        category="llm_orchestration",
+                        command_count=1,
+                    )
+                # Verified mask — block with pii_masked reason.
+                # updatedInput is not available for LLM orchestration tools (Agent/Task),
+                # so mask mode cannot forward a sanitized payload. Block is the only safe
+                # option (consistent with D-01 / D-02 decisions).
                 return _deny_pre_tool(
-                    reason_code="inline_pii",
+                    reason_code="pii_masked",
                     category="llm_orchestration",
                     command_count=1,
                 )
+            # Default: block
+            return _deny_pre_tool(
+                reason_code="inline_pii",
+                category="llm_orchestration",
+                command_count=1,
+            )
         return 0
 
     if tool in ("Read", "Edit", "Write", "MultiEdit", "NotebookEdit", "NotebookRead"):
