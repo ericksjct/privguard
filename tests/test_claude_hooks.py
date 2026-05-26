@@ -438,3 +438,21 @@ def test_pre_tool_mask_mode_llm_orchestration_blocks_pii(
     assert "category=llm_orchestration" in output
     assert "reason=pii_masked" in output or "reason=mask_verification_failed" in output
     assert_no_prompt_derived_text(output)
+
+
+def test_pre_tool_mask_mode_clean_llm_orchestration_payload_allows(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """mask mode with clean LLM orchestration payload exits 0."""
+    monkeypatch.setenv("PII_GUARD_MODE", "mask")
+    payload = {
+        "tool_name": "Task",
+        "tool_input": {"prompt": "summarize public project metadata"},
+    }
+
+    assert run_pre_tool(monkeypatch, payload) == 0
+
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
