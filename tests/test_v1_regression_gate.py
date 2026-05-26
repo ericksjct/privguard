@@ -434,8 +434,11 @@ def test_TEST_05_non_blocking_prompt_modes_are_labeled_non_protective(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    """TEST-05: warn and scrub modes are labeled non-protective and output is sanitized."""
-    for mode in ("warn", "scrub"):
+    """TEST-05: warn mode is labeled non-protective and output is sanitized.
+    Note: scrub mode was deprecated in Phase 8 — it now falls through to block (exit 2)
+    and no longer carries the non-protective label.
+    """
+    for mode in ("warn",):
         exit_code = _run_user_prompt(monkeypatch, {"prompt": PROMPT_TEXT}, mode=mode)
         captured = capsys.readouterr()
         output = captured.out + captured.err
