@@ -8,11 +8,43 @@ import math
 import os
 import pathlib
 import sys
+from urllib.parse import urlparse
 
 from .detection import detect
 from .diagnostics import format_hit_summary, summarize_hits, to_json
 from .masking import mask_text
 from .policy import classify_command, classify_path
+
+
+_ALLOWED_FETCH_DOMAINS: frozenset[str] = frozenset({
+    "github.com",
+    "raw.githubusercontent.com",
+    "docs.python.org",
+    "pypi.org",
+    "docs.anthropic.com",
+    "docs.rs",
+    "crates.io",
+})
+
+
+def check_webfetch(tool_input: dict) -> tuple[bool, str]:
+    """Allow WebFetch only to domains in _ALLOWED_FETCH_DOMAINS.
+
+    Subdomain matching: a netloc of "api.github.com" is allowed because it
+    ends with ".github.com" (i.e. the parent domain "github.com" is allowed).
+    """
+    url = tool_input.get("url") or ""
+    if not url or not isinstance(url, str):
+        return False, "webfetch_url_missing"
+    parsed = urlparse(url)
+    netloc = parsed.netloc.lower()
+    if not netloc:
+        return False, "webfetch_domain_not_allowed"
+    # Exact match or subdomain match (netloc ends with ".<allowed_domain>")
+    for domain in _ALLOWED_FETCH_DOMAINS:
+        if netloc == domain or netloc.endswith("." + domain):
+            return True, ""
+    return False, "webfetch_domain_not_allowed"
 
 
 def _audit_log(
@@ -312,7 +344,13 @@ def main_pre_tool() -> int:
     if not isinstance(tool_input, dict):
         tool_input = {}
 
-    # Fail closed: WebFetch, WebSearch, and unknown MCP tools are blocked.
+    if tool == "WebFetch":
+        ok, reason_code = check_webfetch(tool_input)
+        if not ok:
+            return _deny_pre_tool(reason_code=reason_code, category="webfetch")
+        return 0
+
+    # Fail closed: WebSearch and unknown MCP tools are blocked.
     # Add entries to _KNOWN_LOCAL_TOOLS or _ALLOWED_MCP_PREFIXES to allow more.
     if not _is_allowed_tool(tool):
         return _deny_pre_tool(reason_code="unknown_tool", category="unknown_tool")
