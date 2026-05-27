@@ -145,11 +145,11 @@ Plans:
 
 **Goal:** Permitir `WebFetch` apenas para domínios confiáveis (ex: github.com, docs.python.org) em vez de bloquear completamente. Implementar `check_webfetch()` em `privguard/hooks.py` com `_ALLOWED_FETCH_DOMAINS` e inspeção via `urlparse`. Atualmente `WebFetch` fica bloqueado e o fluxo recomendado é Bash+curl (opção de menor risco).
 **Requirements:** WF-01
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 
 Plans:
 - [x] 999.1-01-PLAN.md — Add _ALLOWED_FETCH_DOMAINS constant and check_webfetch() to hooks.py; wire WebFetch branch in main_pre_tool()
-- [ ] 999.1-02-PLAN.md — Add 6 WebFetch domain allowlist tests to test_claude_hooks.py
+- [x] 999.1-02-PLAN.md — Add 6 WebFetch domain allowlist tests to test_claude_hooks.py
 
 ### Phase 999.2: Audit Log Mínimo Viável (BACKLOG)
 
