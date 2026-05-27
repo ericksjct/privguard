@@ -456,3 +456,100 @@ def test_pre_tool_mask_mode_clean_llm_orchestration_payload_allows(
     captured = capsys.readouterr()
     assert captured.out == ""
     assert captured.err == ""
+
+
+# ---------------------------------------------------------------------------
+# Phase 999.1: WebFetch domain allowlist tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.parametrize("url", [
+    "https://github.com/anthropics/privguard",
+    "https://docs.python.org/3/library/urllib.parse.html",
+    "https://pypi.org/project/presidio-analyzer/",
+    "https://docs.anthropic.com/en/docs/overview",
+    "https://raw.githubusercontent.com/anthropics/anthropic-sdk-python/main/README.md",
+    "https://docs.rs/serde/latest/serde/",
+    "https://crates.io/crates/serde",
+])
+def test_pre_tool_webfetch_allowed_domain_exits_0(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    url: str,
+) -> None:
+    payload = {"tool_name": "WebFetch", "tool_input": {"url": url}}
+    assert run_pre_tool(monkeypatch, payload) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+
+@pytest.mark.parametrize("url", [
+    "https://evil.com/steal",
+    "https://pastebin.com/abc123",
+    "https://attacker.example.com/exfil",
+    "https://notgithub.com/trick",
+    "https://github.com.evil.com/bypass",
+])
+def test_pre_tool_webfetch_blocked_domain_exits_2_with_sanitized_output(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    url: str,
+) -> None:
+    payload = {"tool_name": "WebFetch", "tool_input": {"url": url}}
+    assert run_pre_tool(monkeypatch, payload) == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert captured.out == ""
+    assert "BLOQUEADO" in output
+    assert "reason=webfetch_domain_not_allowed" in output
+    assert "category=webfetch" in output
+    # URL must not be echoed in denial output (sanitized)
+    assert url not in output
+
+
+def test_pre_tool_webfetch_missing_url_exits_2(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    payload = {"tool_name": "WebFetch", "tool_input": {}}
+    assert run_pre_tool(monkeypatch, payload) == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "reason=webfetch_url_missing" in output
+    assert "category=webfetch" in output
+
+
+def test_pre_tool_webfetch_empty_url_exits_2(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    payload = {"tool_name": "WebFetch", "tool_input": {"url": ""}}
+    assert run_pre_tool(monkeypatch, payload) == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "reason=webfetch_url_missing" in output
+
+
+def test_pre_tool_webfetch_subdomain_of_allowed_domain_exits_0(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # api.github.com is a subdomain of github.com which is in the allowlist
+    payload = {"tool_name": "WebFetch", "tool_input": {"url": "https://api.github.com/repos/anthropics"}}
+    assert run_pre_tool(monkeypatch, payload) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err == ""
+
+
+def test_pre_tool_webfetch_malformed_url_no_scheme_exits_2(
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    # urlparse("github.com/foo").netloc == "" — no netloc means blocked
+    payload = {"tool_name": "WebFetch", "tool_input": {"url": "github.com/foo"}}
+    assert run_pre_tool(monkeypatch, payload) == 2
+    captured = capsys.readouterr()
+    output = captured.out + captured.err
+    assert "reason=webfetch_domain_not_allowed" in output
