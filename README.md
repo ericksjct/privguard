@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="privguard_thumb.png" alt="privguard" width="100%">
+</p>
+
 [🇺🇸 English](README.md) | [🇧🇷 Português](README.pt-BR.md)
 
 # privguard
