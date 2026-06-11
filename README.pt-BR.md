@@ -52,6 +52,70 @@ mapa de desanonimização.
 Todos os valores acima são fixtures sintéticos de teste — consulte
 [Política de fixture-apenas-sintéticos](#política-de-fixture-apenas-sintéticos).
 
+## O que o privguard captura
+
+Tudo abaixo é **saída comprovada**, não uma lista de desejos. É o resultado literal de passar
+um arquivo de fixtures sintéticos pelo `privguard mask` nas configurações padrão (modo estrito) —
+reproduzível com o conjunto de testes em `tests/test_detection.py` (85 testes de detecção/mascaramento
+passando):
+
+```text
+CPF 123.456.789-09                      →  CPF <BR_CPF>
+CNPJ 12.345.678/0001-95                 →  CNPJ <BR_CNPJ>
+CNH 12345678900                         →  CNH <BR_CNH>
+PIS 123.45678.90-0                      →  PIS <BR_PIS_PASEP>
+SUS 123 4567 8901 2348                  →  SUS <BR_CARTAO_SUS>
+RG 12.345.678-9                         →  RG <BR_RG>
+celular +55 (11) 91234-5678             →  celular <BR_PHONE>
+CEP 01310-200                           →  CEP <BR_CEP>
+placa ABC-1234 e BRA1A23                →  placa <BR_PLACA_OLD> e <BR_PLACA_MERCOSUL>
+api_key=sk-test-abcdefghij...           →  api_key=<API_KEY>
+token ghp_ABCDEFGHIJ...                 →  token <TOKEN>
+DATABASE_URL=postgres://user:pass@...   →  DATABASE_URL=<DATABASE_URL>
+email contato@exemplo.com.br            →  email <EMAIL>
+```
+
+Também detectado pelo mesmo motor de padrões e coberto por `tests/test_detection.py`:
+IBAN (`<IBAN>`, inclusive separado por espaços), códigos de barras de boleto (`<BR_BOLETO>`),
+referências de agência e conta bancária (`<BR_BANK_AGENCY>`, `<BR_BANK_ACCOUNT>`), endereços
+(`<BR_ADDRESS>`), título de eleitor (`<BR_TITULO_ELEITOR>`), IPs privados/públicos
+(`<IP_PRIVADO>`, `<IP_PUBLICO>`), números de cartão de crédito que passam no dígito Luhn
+(`<CREDIT_CARD>`), chaves AWS (`<AWS_KEY>`), JWTs (`<JWT>`) e atribuições no estilo
+`KEY=`, `SECRET=`, `PASSWORD=`.
+
+Identificadores brasileiros (CPF, CNPJ, CNH, título, PIS/PASEP, cartão SUS) são validados pelo
+seu **checksum** antes do mascaramento — uma sequência aleatória de 11 dígitos não é tratada como
+CPF. É isso que mantém os falsos positivos baixos; é também a origem das lacunas deliberadas abaixo.
+
+## O que o privguard NÃO captura (por padrão)
+
+Isto não são bugs — são limites documentados e testados. Os dois primeiros **passam intactos**
+a menos que você opte explicitamente por ativá-los:
+
+| Entrada (sintética) | Modo estrito (padrão) | Opt-in |
+|---|---|---|
+| `Maria Silva` (nome de pessoa) | `Maria Silva` — **não mascarado** | `PII_GUARD_DETECT_NAMES=true` → `<BR_NAME>` |
+| `456.789.123-45` (CPF com checksum inválido) | `456.789.123-45` — **não mascarado** | `PII_GUARD_LENIENT=true` → `<BR_CPF>` |
+| `45678912345` (11 dígitos crus, sem pontos/traço) | não mascarado como CPF | continua estrito mesmo no modo leniente (guarda de formato) |
+
+Por que cada lacuna existe:
+
+- **Nomes ficam desligados por padrão** porque a correspondência de nomes em texto livre produz
+  falsos positivos demais para ser habilitada globalmente. Ative com `PII_GUARD_DETECT_NAMES=true`
+  quando seus payloads forem ricos em nomes.
+- **Identificadores com checksum inválido ficam desligados por padrão** porque a validação estrita
+  de checksum é o que impede que números cotidianos sejam mascarados por engano. CPFs sintéticos ou
+  com erro de digitação (comuns em dados de teste) só são mascarados com `PII_GUARD_LENIENT=true`, e
+  mesmo assim apenas no formato **com pontuação** `DDD.DDD.DDD-DD` — nunca uma sequência crua de 11
+  dígitos, que ofuscaria CNH e PIS/PASEP.
+- **Mascaramento no Codex não é oferecido de forma alguma** — o Codex é `experimental block-only`.
+  O privguard pode bloquear payloads sensíveis do Codex, mas não os reescreve. Consulte
+  [Matriz de capacidades](#matriz-de-capacidades).
+
+O privguard tem como alvo PII brasileiro e strings com formato de segredo. É uma camada de defesa
+com bloqueio fail-closed nas superfícies suportadas — não uma garantia de 100% de recall sobre
+texto arbitrário.
+
 ## Uso da CLI
 
 ```bash

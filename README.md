@@ -52,6 +52,66 @@ deanonymization map.
 All values shown above are synthetic test fixtures — see
 [Synthetic-fixture-only policy](#synthetic-fixture-only-policy).
 
+## What privguard catches
+
+Everything below is **proven output**, not a wish list. This is the verbatim result of
+piping a synthetic fixture file through `privguard mask` on the default (strict) settings —
+reproducible with the test suite in `tests/test_detection.py` (85 passing detection/masking
+tests):
+
+```text
+CPF 123.456.789-09                      →  CPF <BR_CPF>
+CNPJ 12.345.678/0001-95                 →  CNPJ <BR_CNPJ>
+CNH 12345678900                         →  CNH <BR_CNH>
+PIS 123.45678.90-0                      →  PIS <BR_PIS_PASEP>
+SUS 123 4567 8901 2348                  →  SUS <BR_CARTAO_SUS>
+RG 12.345.678-9                         →  RG <BR_RG>
+celular +55 (11) 91234-5678             →  celular <BR_PHONE>
+CEP 01310-200                           →  CEP <BR_CEP>
+placa ABC-1234 e BRA1A23                →  placa <BR_PLACA_OLD> e <BR_PLACA_MERCOSUL>
+api_key=sk-test-abcdefghij...           →  api_key=<API_KEY>
+token ghp_ABCDEFGHIJ...                 →  token <TOKEN>
+DATABASE_URL=postgres://user:pass@...   →  DATABASE_URL=<DATABASE_URL>
+email contato@exemplo.com.br            →  email <EMAIL>
+```
+
+Also detected by the same pattern engine and covered by `tests/test_detection.py`:
+IBAN (`<IBAN>`, including space-separated), boleto barcodes (`<BR_BOLETO>`), bank agency and
+account references (`<BR_BANK_AGENCY>`, `<BR_BANK_ACCOUNT>`), street addresses (`<BR_ADDRESS>`),
+título de eleitor (`<BR_TITULO_ELEITOR>`), private/public IPs (`<IP_PRIVADO>`, `<IP_PUBLICO>`),
+credit-card numbers that pass the Luhn check (`<CREDIT_CARD>`), AWS keys (`<AWS_KEY>`), JWTs
+(`<JWT>`), and `KEY=`, `SECRET=`, `PASSWORD=` style assignments.
+
+Brazilian identifiers (CPF, CNPJ, CNH, título, PIS/PASEP, cartão SUS) are validated by their
+**checksum** before masking — a random 11-digit string is not treated as a CPF. This is what
+keeps false positives low; it is also the source of the deliberate gaps below.
+
+## What privguard does NOT catch (by default)
+
+These are not bugs — they are documented, tested limits. The first two **pass through
+untouched** unless you explicitly opt in:
+
+| Input (synthetic) | Default strict mode | Opt-in |
+|---|---|---|
+| `Maria Silva` (a person's name) | `Maria Silva` — **not masked** | `PII_GUARD_DETECT_NAMES=true` → `<BR_NAME>` |
+| `456.789.123-45` (CPF with an invalid checksum) | `456.789.123-45` — **not masked** | `PII_GUARD_LENIENT=true` → `<BR_CPF>` |
+| `45678912345` (bare 11-digit, no dots/dash) | not masked as CPF | stays strict even in lenient mode (format guard) |
+
+Why each gap exists:
+
+- **Names are off by default** because free-text name matching produces too many false
+  positives to enable globally. Turn it on with `PII_GUARD_DETECT_NAMES=true` when your
+  payloads are name-heavy.
+- **Invalid-checksum identifiers are off by default** because strict checksum validation is
+  what keeps everyday numbers from being mis-masked. Synthetic or typo'd CPFs (common in test
+  data) only mask under `PII_GUARD_LENIENT=true`, and even then only the **formatted**
+  `DDD.DDD.DDD-DD` shape — never a bare run of 11 digits, which would shadow CNH and PIS/PASEP.
+- **Codex masking is not provided at all** — Codex is `experimental block-only`. privguard can
+  block sensitive Codex payloads but does not rewrite them. See [Capabilities matrix](#capabilities-matrix).
+
+privguard targets Brazilian PII and secret-shaped strings. It is one layer of defense with
+fail-closed blocking on supported surfaces — not a guarantee of 100% recall on arbitrary text.
+
 ## CLI usage
 
 ```bash
