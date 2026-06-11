@@ -30,7 +30,7 @@ _PROTECTED: tuple[str, ...] = (
     "pyproject.toml",
     "AGENTS.md",
     "README.md",
-    "README.pt-BR.md",
+    "README.en.md",
 )
 
 
