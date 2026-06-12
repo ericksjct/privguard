@@ -218,7 +218,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
+Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8, then backlog 999.1 -> 999.2 -> 999.3 -> 999.4 -> 999.5
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
@@ -229,6 +229,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 5. Synthetic Regression Gate | 1/1 | Complete | 2026-05-05 |
 | 6. Milestone Cleanup | 4/4 | Complete | 2026-05-08 |
 | 7. Project README + Repo Hygiene | 3/3 | Complete | 2026-05-10 |
+| 8. Hook Mode Selector | 2/2 | Complete | 2026-05-25 |
+| 999.1 WebFetch Allowlist | 2/2 | Complete (no VERIFICATION.md) | 2026-05-27 |
+| 999.2 Audit Log | 1/1 | Complete (no VERIFICATION.md) | 2026-05-21 |
+| 999.3 Masking Gaps (RG/CNPJ/PIX) | 1/1 | Complete | 2026-05-21 |
+| 999.4 CPF Leniency Mode | 2/2 | Complete | 2026-05-21 |
+| 999.5 Detection Hardening v2 | 4/4 | Complete | 2026-05-24 |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 
