@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Audit Cleanup
 status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-06-12T01:20:55.028Z"
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-06-12T01:25:32.335Z"
 last_activity: 2026-06-12
 progress:
   total_phases: 14
   completed_phases: 13
   total_plans: 37
-  completed_plans: 35
-  percent: 95
+  completed_plans: 36
+  percent: 97
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 09 (milestone-v1-0-audit-cleanup) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-06-12
 
@@ -71,6 +71,7 @@ Progress: [██████████] 100%
 | Phase 08 P01 | 18 | 2 tasks | 2 files |
 | Phase 08 P02 | 5 | 2 tasks | 1 files |
 | Phase 09 P01 | 2min | 3 tasks | 2 files |
+| Phase 09 P02 | 1min | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,7 @@ Recent decisions affecting current work:
 - [Phase 08]: _prompt_diagnostic must not receive mode= kwarg in protective (exit 2) paths; mode_scope=local_development_non_protective is warn-only
 - [Phase 08]: Wave 2 adds only the missing clean-payload PreToolUse test; all other tests were complete from wave 1 (08-01)
 - [Phase 09]: Left Phase 9 meta-references to README.pt-BR.md intact (they describe the cleanup task, not stale layout refs); the actual stale layout reference was swept.
+- [Phase 09]: Plan 09-02 rewrote both README warn-vs-block FAQs to document the shipped PII_GUARD_MODE selector (block default / warn opt-in non-protective / mask), removing the false warn-only out-of-scope claim; default behavior unchanged (doc-only).
 
 ### Roadmap Evolution
 
@@ -124,6 +126,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-12T01:20:47.529Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-06-12T01:25:26.988Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
