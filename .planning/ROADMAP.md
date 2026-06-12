@@ -156,7 +156,7 @@ Plans:
 Plans:
 - [x] 09-01-PLAN.md — Sync REQUIREMENTS.md + ROADMAP.md state (tick DOC-01/MAINT-01/Phase 7, add 13-phase Progress table, drop stale README.pt-BR.md refs)
 - [x] 09-02-PLAN.md — Rewrite README.md (PT) + README.en.md (EN) warn-vs-block FAQ to document the PII_GUARD_MODE block/warn/mask selector
-- [ ] 09-03-PLAN.md — cleanup.py robustness fixes (WR-01 guarded read, WR-02 explicit headers, IN-01 dead-code) + BLOCKING full regression gate
+- [x] 09-03-PLAN.md — cleanup.py robustness fixes (WR-01 guarded read, WR-02 explicit headers, IN-01 dead-code) + BLOCKING full regression gate
 
 ## Backlog
 
