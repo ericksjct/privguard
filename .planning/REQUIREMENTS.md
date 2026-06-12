@@ -62,11 +62,11 @@ Requirements for the initial release. Each maps to roadmap phases.
 
 ### Documentation
 
-- [ ] **DOC-01**: Project includes a bilingual top-level README (English primary `README.md`, Portuguese secondary `README.pt-BR.md`) covering installation, CLI usage, Claude Code hook setup, the Claude/Codex capabilities matrix, what the guard does *not* do, and the synthetic-fixture-only policy.
+- [x] **DOC-01**: Project includes a bilingual top-level README (Portuguese default `README.md`, English `README.en.md`) covering installation, CLI usage, Claude Code hook setup, the Claude/Codex capabilities matrix, what the guard does *not* do, and the synthetic-fixture-only policy.
 
 ### Maintenance
 
-- [ ] **MAINT-01**: Repo includes a config-driven cleanup mechanism with patterns declared in `pyproject.toml` (`[tool.privguard.cleanup]`), a hard-coded protected list (`.env`, `data_sensivel/`, `.planning/`, `.git/`, source directories) the script can never delete, and a dry-run-by-default contract that requires an explicit `--apply` flag before deletion.
+- [x] **MAINT-01**: Repo includes a config-driven cleanup mechanism with patterns declared in `pyproject.toml` (`[tool.privguard.cleanup]`), a hard-coded protected list (`.env`, `data_sensivel/`, `.planning/`, `.git/`, source directories) the script can never delete, and a dry-run-by-default contract that requires an explicit `--apply` flag before deletion.
 
 ## v2 Requirements
 
@@ -140,8 +140,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |
 | TEST-06 | Phase 5 | Complete |
-| DOC-01 | Phase 7 | Pending |
-| MAINT-01 | Phase 7 | Pending |
+| DOC-01 | Phase 7 | Complete |
+| MAINT-01 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 34 total
@@ -152,3 +152,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 *Requirements defined: 2026-05-01*
 *Last updated: 2026-05-06 after v1.0 milestone audit (added Phase 6 cleanup + Phase 7 README/hygiene scope, added DOC-01 and MAINT-01)*
 *Last updated: 2026-05-06 after milestone v1.0 cleanup (Phase 6 — synced CDX/TEST checkboxes + traceability with VERIFICATION.md, rewrote PKG-02 to canonical `privguard`)*
+*Last updated: 2026-06-11 after milestone v1.0 audit cleanup (Phase 9 — ticked DOC-01/MAINT-01, set traceability rows Complete, corrected DOC-01 README layout text)*
