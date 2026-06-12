@@ -18,7 +18,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Codex Compatibility Evidence** - Codex support claims are backed by documented interception evidence and explicit support-level labels.
 - [x] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
 - [x] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
-- [ ] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (EN + PT-BR) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
+- [x] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (PT + EN) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 - [ ] **Phase 9: Milestone v1.0 Audit Cleanup** - All v1.0 audit tech-debt is swept: REQUIREMENTS/ROADMAP state matches the verified system, README documents the shipped block/warn/mask selector, and cleanup.py robustness fixes land (closes tech-debt items from the 2026-06-10 audit).
 
 ## Phase Details
@@ -130,7 +130,7 @@ Plans:
 **Depends on**: Phase 6
 **Requirements**: DOC-01, MAINT-01
 **Success Criteria** (what must be TRUE):
-  1. User can read a top-level README in English (`README.md`) and Portuguese (`README.pt-BR.md`) that covers install, CLI usage, Claude Code hook setup, the Claude/Codex capabilities matrix, what privguard does *not* do, and the synthetic-fixture-only policy.
+  1. User can read a top-level README in Portuguese (`README.md`) and English (`README.en.md`) that covers install, CLI usage, Claude Code hook setup, the Claude/Codex capabilities matrix, what privguard does *not* do, and the synthetic-fixture-only policy.
   2. User can run a single cleanup command and remove pytest cache directories, build artifacts, and other declared temporary directories from the repo root without touching `.env`, `data_sensivel/`, `.planning/`, `.git/`, or any source directory.
   3. Maintainer can add a new cleanup pattern by editing one list in `pyproject.toml` (`[tool.privguard.cleanup]`), without modifying the cleanup script.
   4. Cleanup script runs as dry-run by default and requires an explicit `--apply` flag before deleting anything (matches privguard's fail-closed posture).
@@ -228,7 +228,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7
 | 4. Codex Compatibility Evidence | 2/2 | Complete | 2026-05-04 |
 | 5. Synthetic Regression Gate | 1/1 | Complete | 2026-05-05 |
 | 6. Milestone Cleanup | 4/4 | Complete | 2026-05-08 |
-| 7. Project README + Repo Hygiene | 0/TBD | Not started | - |
+| 7. Project README + Repo Hygiene | 3/3 | Complete | 2026-05-10 |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 
