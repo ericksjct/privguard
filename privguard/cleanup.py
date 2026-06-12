@@ -65,8 +65,12 @@ def _verify_repo_root(cwd: Path) -> None:
 
 def _load_patterns(cwd: Path) -> list[str]:
     """Read [tool.privguard.cleanup].patterns. Schema-validate per Pitfall 2."""
-    with (cwd / "pyproject.toml").open("rb") as handle:
-        data = tomllib.load(handle)
+    try:
+        with (cwd / "pyproject.toml").open("rb") as handle:
+            data = tomllib.load(handle)
+    except (OSError, tomllib.TOMLDecodeError):
+        _err("pyproject.toml unreadable", "pyproject_unreadable")
+        raise SystemExit(2)
     table = data.get("tool", {}).get("privguard", {}).get("cleanup")
     if not isinstance(table, dict) or "patterns" not in table:
         _err("[tool.privguard.cleanup] missing or invalid", "cleanup_table_missing")
@@ -173,17 +177,24 @@ def _human_size(n: int) -> str:
         n_float = n / (1024 ** ("KB MB GB".split().index(unit) + 1))
         if n_float < 1024 or unit == "GB":
             return f"{n_float:.1f} {unit}"
-    return f"{n} B"
 
 
 def _format_dry_run(
-    matches: list[tuple[str, Path, int, int, int]], skips: list[tuple[str, str]]
+    matches: list[tuple[str, Path, int, int, int]],
+    skips: list[tuple[str, str]],
+    apply: bool = False,
 ) -> str:
-    """D-10: grouped-by-pattern preview with byte sizes. Paths-and-counts only, no contents."""
+    """D-10: grouped-by-pattern preview with byte sizes. Paths-and-counts only, no contents.
+
+    apply=False emits the [dry-run] header + 'Run with --apply to delete.' trailer;
+    apply=True emits the [apply] header and no trailer.
+    """
+    prefix = "[apply]" if apply else "[dry-run]"
+    verb = "deleting" if apply else "would delete"
     if not matches and not skips:
-        return "[dry-run] nothing to clean.\n"
+        return f"{prefix} nothing to clean.\n"
     total_bytes = sum(m[4] for m in matches)
-    lines = [f"[dry-run] would delete ({len(matches)} paths, {_human_size(total_bytes)} total):"]
+    lines = [f"{prefix} {verb} ({len(matches)} paths, {_human_size(total_bytes)} total):"]
     by_pattern: dict[str, list[tuple[Path, int, int, int]]] = {}
     for pattern, p, fc, dc, bs in matches:
         by_pattern.setdefault(pattern, []).append((p, fc, dc, bs))
@@ -198,7 +209,8 @@ def _format_dry_run(
         )
     for rel, reason in skips:
         lines.append(f"  (skipped: {reason}) {rel}")
-    lines.append("Run with --apply to delete.")
+    if not apply:
+        lines.append("Run with --apply to delete.")
     return "\n".join(lines) + "\n"
 
 
@@ -227,11 +239,7 @@ def main(argv: list[str] | argparse.Namespace | None = None) -> int:
         return 0
 
     # --apply branch
-    apply_output = (
-        _format_dry_run(matches, skips)
-        .replace("[dry-run] would delete", "[apply] deleting")
-        .replace("Run with --apply to delete.\n", "")
-    )
+    apply_output = _format_dry_run(matches, skips, apply=True)
     sys.stdout.write(apply_output)
     for rel, reason in skips:
         _warn(rel, reason)
