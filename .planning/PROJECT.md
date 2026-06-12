@@ -25,7 +25,8 @@ No sensitive Brazilian or company data should be sent to external LLM providers 
 - ✓ Phase 4 validated Codex compatibility evidence: Codex support is evidence-labeled and no automatic Codex masking claim exists without tested interception/rewrite proof — Phase 4 Codex Compatibility Evidence
 - ✓ Phase 5 validated synthetic regression gate: the v1 surface has synthetic tests proving raw sensitive values do not leak through outputs, logs, hooks, masks, or failures — Phase 5 Synthetic Regression Gate
 - ✓ Phase 6 validated milestone cleanup: requirements, roadmap, summary traceability, canonical `privguard` package metadata, top-level public API exports, and Python 3.14 install guidance match the verified v1 state — Phase 6 Milestone Cleanup
-- ✓ Phase 7 validated bilingual README hygiene: `README.md` (English) and `README.pt-BR.md` (Brazilian Portuguese) both exist with all 9 D-04 sections, locked vocabulary verbatim, cross-language switcher, and `privguard cleanup` subcommand documented — Phase 7 README Hygiene
+- ✓ Phase 7 validated bilingual README hygiene: `README.md` (Brazilian Portuguese, default) and `README.en.md` (English) both exist with all 9 D-04 sections, locked vocabulary verbatim, cross-language switcher, and `privguard cleanup` subcommand documented — Phase 7 README Hygiene
+- ✓ Phase 9 validated v1.0 audit cleanup: REQUIREMENTS.md DOC-01/MAINT-01 checkboxes + traceability synced to verified state, ROADMAP.md Phase 7 ticked with a complete 13-phase Progress table, README warn-vs-block FAQ rewritten to document the shipped `PII_GUARD_MODE` selector (PT+EN parity), and three `cleanup.py` robustness fixes (WR-01 guarded TOML reopen, WR-02 parameterized formatter, IN-01 dead-code removal) landed with the synthetic suite green — Phase 9 Milestone v1.0 Audit Cleanup
 
 ### Active
 
@@ -92,4 +93,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-25 after Phase 8 completion*
+*Last updated: 2026-06-12 after Phase 9 completion*
