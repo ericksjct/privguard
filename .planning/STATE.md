@@ -1,17 +1,17 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.0
-milestone_name: milestone
+milestone_name: Audit Cleanup
 status: executing
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-05-27T00:58:03.379Z"
-last_activity: 2026-05-27 -- Phase 999.1 execution started
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-06-12T01:20:55.028Z"
+last_activity: 2026-06-12
 progress:
-  total_phases: 13
-  completed_phases: 12
-  total_plans: 34
-  completed_plans: 32
-  percent: 94
+  total_phases: 14
+  completed_phases: 13
+  total_plans: 37
+  completed_plans: 35
+  percent: 95
 ---
 
 # Project State
@@ -22,14 +22,14 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Project:** privguard
 **Core value:** No sensitive Brazilian or company data should be sent to external LLM providers in clear text.
-**Current focus:** Phase 999.1 — webfetch-domain-allowlist
+**Current focus:** Phase 09 — milestone-v1-0-audit-cleanup
 
 ## Current Position
 
-Phase: 999.1 (webfetch-domain-allowlist) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 999.1
-Last activity: 2026-05-27 -- Phase 999.1 execution started
+Phase: 09 (milestone-v1-0-audit-cleanup) — EXECUTING
+Plan: 2 of 3
+Status: Ready to execute
+Last activity: 2026-06-12
 
 Progress: [██████████] 100%
 
@@ -70,6 +70,7 @@ Progress: [██████████] 100%
 | Phase 03 P04 | 2min | 3 tasks | 1 files |
 | Phase 08 P01 | 18 | 2 tasks | 2 files |
 | Phase 08 P02 | 5 | 2 tasks | 1 files |
+| Phase 09 P01 | 2min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,7 @@ Recent decisions affecting current work:
 - [Phase 08]: scrub branch replaced by one-line stderr notice falling through to default block; scrub_unsupported reason code removed
 - [Phase 08]: _prompt_diagnostic must not receive mode= kwarg in protective (exit 2) paths; mode_scope=local_development_non_protective is warn-only
 - [Phase 08]: Wave 2 adds only the missing clean-payload PreToolUse test; all other tests were complete from wave 1 (08-01)
+- [Phase 09]: Left Phase 9 meta-references to README.pt-BR.md intact (they describe the cleanup task, not stale layout refs); the actual stale layout reference was swept.
 
 ### Roadmap Evolution
 
@@ -122,6 +124,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-05-26T02:07:10.791Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-06-12T01:20:47.529Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None
