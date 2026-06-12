@@ -151,10 +151,12 @@ Plans:
   3. README.md (Portuguese default) and README.en.md (English) document the `PII_GUARD_MODE` selector (block default / warn opt-in non-protective / mask) instead of declaring warn-only "out of scope"; DOC-01 wording matches the shipped `README.md` + `README.en.md` layout (no stale `README.pt-BR.md` reference).
   4. cleanup.py: `_load_patterns()` reopen of `pyproject.toml` is guarded so a TOCTOU `OSError` surfaces as sanitized `[CLEANUP] error` (exit 2 per D-14), not unhandled exit 1; apply/dry-run headers are built explicitly (no fragile `.replace()` substitution); the unreachable `_human_size` return is removed.
   5. The synthetic regression gate still passes (252 passed / 1 skipped baseline) after the cleanup.py changes.
-**Plans**: TBD plans
+**Plans**: 3 plans
 
 Plans:
-- [ ] TBD (run `/gsd-plan-phase 9`)
+- [ ] 09-01-PLAN.md — Sync REQUIREMENTS.md + ROADMAP.md state (tick DOC-01/MAINT-01/Phase 7, add 13-phase Progress table, drop stale README.pt-BR.md refs)
+- [ ] 09-02-PLAN.md — Rewrite README.md (PT) + README.en.md (EN) warn-vs-block FAQ to document the PII_GUARD_MODE block/warn/mask selector
+- [ ] 09-03-PLAN.md — cleanup.py robustness fixes (WR-01 guarded read, WR-02 explicit headers, IN-01 dead-code) + BLOCKING full regression gate
 
 ## Backlog
 
