@@ -19,6 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 5: Synthetic Regression Gate** - The full v1 surface is covered by synthetic tests proving no raw sensitive values leak through outputs, logs, hooks, masks, or failures.
 - [x] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
 - [ ] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (EN + PT-BR) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
+- [ ] **Phase 9: Milestone v1.0 Audit Cleanup** - All v1.0 audit tech-debt is swept: REQUIREMENTS/ROADMAP state matches the verified system, README documents the shipped block/warn/mask selector, and cleanup.py robustness fixes land (closes tech-debt items from the 2026-06-10 audit).
 
 ## Phase Details
 
@@ -138,6 +139,22 @@ Plans:
 
 Plans:
 - [ ] TBD (run `/gsd-plan-phase 7`)
+
+### Phase 9: Milestone v1.0 Audit Cleanup
+**Goal**: v1.0 documentation state and the cleanup utility accurately reflect the verified system at the 2026-06-10 audit close — checkboxes match VERIFICATION verdicts, the Progress table covers all 13 phases, the README documents the shipped block/warn/mask selector, and cleanup.py honors the D-14 exit-code contract.
+**Depends on**: Phase 8
+**Requirements**: DOC-01, MAINT-01 (checkbox/traceability sync — both verified SATISFIED by Phase 7 on 2026-05-10)
+**Gap Closure**: Closes 9 tech-debt items across 5 sources from `.planning/v1.0-MILESTONE-AUDIT.md` (2026-06-10)
+**Success Criteria** (what must be TRUE):
+  1. REQUIREMENTS.md DOC-01 and MAINT-01 are `[x]` with traceability rows `Complete`; coverage note reflects the synced state.
+  2. ROADMAP.md Phase 7 is `[x]` with its progress row corrected to `3/3 Complete 2026-05-10`; the Progress table includes Phase 8 and backlog 999.1–999.5 so it reflects the true 13-phase milestone.
+  3. README.md (Portuguese default) and README.en.md (English) document the `PII_GUARD_MODE` selector (block default / warn opt-in non-protective / mask) instead of declaring warn-only "out of scope"; DOC-01 wording matches the shipped `README.md` + `README.en.md` layout (no stale `README.pt-BR.md` reference).
+  4. cleanup.py: `_load_patterns()` reopen of `pyproject.toml` is guarded so a TOCTOU `OSError` surfaces as sanitized `[CLEANUP] error` (exit 2 per D-14), not unhandled exit 1; apply/dry-run headers are built explicitly (no fragile `.replace()` substitution); the unreachable `_human_size` return is removed.
+  5. The synthetic regression gate still passes (252 passed / 1 skipped baseline) after the cleanup.py changes.
+**Plans**: TBD plans
+
+Plans:
+- [ ] TBD (run `/gsd-plan-phase 9`)
 
 ## Backlog
 
