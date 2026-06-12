@@ -213,7 +213,15 @@ privguard's detection is fail-closed by design — when a CPF (or any PII) canno
 
 ### Why does it block instead of warn?
 
-Warning-only mode is explicitly out of scope (see [What privguard does NOT do](#what-privguard-does-not-do)). The core value of privguard is preventing sensitive data from reaching an external LLM provider — a warning that the user can ignore would not satisfy that goal. Strict fail-closed behavior is the default for external-provider workflows; rewrite is only used on surfaces where outbound payload replacement is verified.
+Blocking is the **default**, fail-closed behavior — the core value of privguard is preventing sensitive data from reaching an external LLM provider. But the mode is configurable via the `PII_GUARD_MODE` environment variable:
+
+| Mode | `PII_GUARD_MODE` | Behavior on PII detected | Exit code | Protective? |
+|------|------------------|--------------------------|-----------|-------------|
+| `block` (default) | unset or `block` | Blocks the prompt; sanitized `[PII-GUARD BLOQUEADO]` diagnostic to stderr | 2 | Yes (fail-closed) |
+| `warn` | `warn` | Lets the prompt through; emits a warn action; tagged `mode_scope=local_development_non_protective` | 0 | **No** — opt-in, non-protective |
+| `mask` | `mask` | Still blocks (exit 2); shows a masked version in stderr for you to copy-paste and resubmit manually; if the mask cannot be verified → blocks with `mask_verification_failed` | 2 | Yes (block + show-masked) |
+
+The `warn` mode is **explicitly non-protective** and intended for local development only: a warning the user can ignore does not satisfy the privacy guarantee. The `mask` mode never auto-forwards a sanitized payload — Claude Code's `UserPromptSubmit` schema has no prompt-replacement field, so blocking and printing the masked version for manual copy-paste is the only safe path. The default remains fail-closed block.
 
 ### How do I extend the cleanup patterns?
 

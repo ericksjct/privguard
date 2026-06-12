@@ -243,12 +243,21 @@ de defesa, não uma garantia de 100% de recall.
 
 ### Por que ele bloqueia em vez de avisar?
 
-O modo somente-aviso está explicitamente fora do escopo (consulte
-[O que o privguard NÃO faz](#o-que-o-privguard-não-faz)). O valor central do privguard é impedir
-que dados sensíveis alcancem um provedor externo de LLM — um aviso que o usuário pode ignorar não
-satisfaria esse objetivo. O comportamento fail-closed estrito é o padrão para fluxos de trabalho
-com provedores externos; a reescrita é usada apenas em superfícies onde a substituição de payload
-de saída é verificada.
+Bloquear é o comportamento **padrão** e fail-closed — o valor central do privguard é impedir que
+dados sensíveis alcancem um provedor externo de LLM. Mas o modo é configurável via a variável de
+ambiente `PII_GUARD_MODE`:
+
+| Modo | `PII_GUARD_MODE` | Comportamento ao detectar PII | Código de saída | Protege? |
+|------|------------------|-------------------------------|-----------------|----------|
+| `block` (padrão) | não definida ou `block` | Bloqueia o prompt; diagnóstico sanitizado `[PII-GUARD BLOQUEADO]` no stderr | 2 | Sim (fail-closed) |
+| `warn` | `warn` | Deixa o prompt passar; registra ação de aviso; marcado `mode_scope=local_development_non_protective` | 0 | **Não** — opt-in, não protetivo |
+| `mask` | `mask` | Continua bloqueando (saída 2); mostra uma versão mascarada no stderr para você copiar e reenviar manualmente; se a máscara não puder ser verificada → bloqueia com `mask_verification_failed` | 2 | Sim (bloqueia + mostra mascarado) |
+
+O modo `warn` é **explicitamente não protetivo** e destina-se apenas a desenvolvimento local: um
+aviso que o usuário pode ignorar não satisfaz a garantia de privacidade. O modo `mask` nunca
+encaminha automaticamente um payload sanitizado — o esquema `UserPromptSubmit` do Claude Code não
+tem campo de substituição de prompt, então bloquear e imprimir a versão mascarada para cópia
+manual é o único caminho seguro. O padrão permanece fail-closed block.
 
 ### Como estendo os padrões de limpeza?
 
