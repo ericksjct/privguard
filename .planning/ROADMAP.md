@@ -21,7 +21,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
 - [x] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (PT + EN) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 - [ ] **Phase 9: Milestone v1.0 Audit Cleanup** - All v1.0 audit tech-debt is swept: REQUIREMENTS/ROADMAP state matches the verified system, README documents the shipped block/warn/mask selector, and cleanup.py robustness fixes land (closes tech-debt items from the 2026-06-10 audit).
-- [ ] **Phase 10: Test Hardening (fail-closed first)** - Failure-path, evasion, and robustness coverage proves the fail-closed promise: injected detector failures always block, adversarial evasion vectors are documented or flagged RISCO, and a branch-coverage gate is enforced.
+- [x] **Phase 10: Test Hardening (fail-closed first)** - Failure-path, evasion, and robustness coverage proves the fail-closed promise: injected detector failures always block, adversarial evasion vectors are documented or flagged RISCO, and a branch-coverage gate is enforced. (completed 2026-07-09)
 
 ## Phase Details
 
@@ -206,12 +206,12 @@ Plans:
   4. Mutation score over checksum/decision code is reported and surviving mutants become tests; hypothesis properties hold for validators and masking idempotence.
   5. `--cov-fail-under` (branch) is active from the measured baseline, and the pre-existing suite still passes.
 
-**Plans**: 1/2 plans executed
+**Plans**: 2/2 plans complete
 
 Plans:
 
 - [x] 10-01-PLAN.md — Baseline + dev-deps, then Tier 1: fail-closed injection (P1), adversarial evasion (P2), ReDoS/size guard (P3)
-- [ ] 10-02-PLAN.md — Tier 2: property-based validators (P5), checksum edges (P6), FP corpus/overlap (P7), mutation + coverage gate (P4)
+- [x] 10-02-PLAN.md — Tier 2: property-based validators (P5), checksum edges (P6), FP corpus/overlap (P7), mutation + coverage gate (P4)
 
 ## Backlog
 
@@ -297,7 +297,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8, then back
 | 999.3 Masking Gaps (RG/CNPJ/PIX) | 1/1 | Complete | 2026-05-21 |
 | 999.4 CPF Leniency Mode | 2/2 | Complete | 2026-05-21 |
 | 999.5 Detection Hardening v2 | 4/4 | Complete | 2026-05-24 |
-| 10. Test Hardening | 1/2 | In Progress|  |
+| 10. Test Hardening | 2/2 | Complete   | 2026-07-09 |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 

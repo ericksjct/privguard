@@ -4,17 +4,17 @@ milestone: v1.0
 milestone_name: Audit Cleanup
 current_phase: 10
 current_phase_name: test-hardening
-status: executing
+status: verifying
 stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-07-09T23:26:04.245Z"
+last_updated: "2026-07-09T23:46:13.541Z"
 last_activity: 2026-07-09
 last_activity_desc: Phase 10 execution started
 progress:
   total_phases: 10
-  completed_phases: 9
+  completed_phases: 10
   total_plans: 29
-  completed_plans: 28
-  percent: 90
+  completed_plans: 29
+  percent: 100
 ---
 
 # Project State
@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 Phase: 10 (test-hardening) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-09 — Phase 10 execution started
 
 Progress: [██████████] 100%
@@ -78,6 +78,7 @@ Progress: [██████████] 100%
 | Phase 09 P02 | 1min | 1 tasks | 2 files |
 | Phase 09 P03 | 3min | 2 tasks | 1 files |
 | Phase 10 P01 | 17min | 4 tasks | 4 files |
+| Phase 10 P02 | 11min | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -108,6 +109,7 @@ Recent decisions affecting current work:
 - [Phase 09]: Plan 09-03 mirrored _verify_repo_root's guarded-read idiom in _load_patterns (reused pyproject_unreadable reason code) so a TOCTOU read failure honors the D-14 exit-code contract (exit 2), not an unhandled exit 1.
 - [Phase 09]: Plan 09-03 parameterized _format_dry_run with apply=False, replacing the fragile .replace() substitution in main()'s --apply branch; empty apply state now emits a graceful '[apply] nothing to clean.'
 - [Phase 10]: Plan 10-01 pinned current behavior only: detector-exception fail-open (exit 1 non-blocking) recorded as RISCO R1; EMAIL regex super-linear O(n^2) and absent input-size guard recorded as DECISAO; no production code changed.
+- [Phase 10]: Plan 10-02 pinned Tier 2 behavior only: new RISCO R12 (SUS card has no leading-digit range check) and DECISAO D4 (mutmut has no native win32 support, run under WSL/CI); enforced branch-coverage gate cov-fail-under=84; no production code changed.
 
 ### Roadmap Evolution
 
@@ -135,6 +137,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-09T23:24:57.965Z
+Last session: 2026-07-09T23:44:42.936Z
 Stopped at: Completed 09-03-PLAN.md
 Resume file: None
