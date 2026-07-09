@@ -39,6 +39,28 @@ include = ["privguard"]
 [tool.setuptools.package-data]
 privguard = ["data/*"]
 
+[tool.pytest.ini_options]
+# Branch-coverage gate (Phase 10 / TEST-07). Floor is set below the measured
+# baseline (86% at 10-01 Task 0; 87% after the 10-02 suites) to enforce a
+# meaningful minimum without CI flake. Raise as coverage climbs.
+addopts = "--cov=privguard --cov-branch --cov-fail-under=84"
+
+[tool.coverage.run]
+branch = true
+source = ["privguard"]
+
+[tool.mutmut]
+# Mutation testing is scoped to the checksum validators and the block/allow
+# decision core — the modules where a sign-inversion-class bug could pass
+# green (see 10-02-PLAN context). mutmut has no native Windows support
+# (https://github.com/boxed/mutmut/issues/397); run under WSL or CI.
+paths_to_mutate = [
+    "privguard/detection.py",
+    "privguard/policy.py",
+    "privguard/masking.py",
+]
+tests_dir = "tests/"
+
 [tool.privguard.cleanup]
 # A trailing "/" means "directory tree, recursive".
 # No trailing "/" means glob-style basename match (fnmatch syntax).
