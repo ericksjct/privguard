@@ -2,16 +2,19 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: Audit Cleanup
-status: verifying
+current_phase: 10
+current_phase_name: test-hardening
+status: executing
 stopped_at: Completed 09-03-PLAN.md
-last_updated: "2026-06-12T01:41:10.907Z"
-last_activity: 2026-06-12
+last_updated: "2026-07-09T23:26:04.245Z"
+last_activity: 2026-07-09
+last_activity_desc: Phase 10 execution started
 progress:
-  total_phases: 14
-  completed_phases: 14
-  total_plans: 37
-  completed_plans: 37
-  percent: 100
+  total_phases: 10
+  completed_phases: 9
+  total_plans: 29
+  completed_plans: 28
+  percent: 90
 ---
 
 # Project State
@@ -22,14 +25,14 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 **Project:** privguard
 **Core value:** No sensitive Brazilian or company data should be sent to external LLM providers in clear text.
-**Current focus:** Phase 09 — milestone-v1-0-audit-cleanup
+**Current focus:** Phase 10 — test-hardening
 
 ## Current Position
 
-Phase: 999.1
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-06-12
+Phase: 10 (test-hardening) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-07-09 — Phase 10 execution started
 
 Progress: [██████████] 100%
 
@@ -74,6 +77,7 @@ Progress: [██████████] 100%
 | Phase 09 P01 | 2min | 3 tasks | 2 files |
 | Phase 09 P02 | 1min | 1 tasks | 2 files |
 | Phase 09 P03 | 3min | 2 tasks | 1 files |
+| Phase 10 P01 | 17min | 4 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -103,6 +107,7 @@ Recent decisions affecting current work:
 - [Phase 09]: Plan 09-02 rewrote both README warn-vs-block FAQs to document the shipped PII_GUARD_MODE selector (block default / warn opt-in non-protective / mask), removing the false warn-only out-of-scope claim; default behavior unchanged (doc-only).
 - [Phase 09]: Plan 09-03 mirrored _verify_repo_root's guarded-read idiom in _load_patterns (reused pyproject_unreadable reason code) so a TOCTOU read failure honors the D-14 exit-code contract (exit 2), not an unhandled exit 1.
 - [Phase 09]: Plan 09-03 parameterized _format_dry_run with apply=False, replacing the fragile .replace() substitution in main()'s --apply branch; empty apply state now emits a graceful '[apply] nothing to clean.'
+- [Phase 10]: Plan 10-01 pinned current behavior only: detector-exception fail-open (exit 1 non-blocking) recorded as RISCO R1; EMAIL regex super-linear O(n^2) and absent input-size guard recorded as DECISAO; no production code changed.
 
 ### Roadmap Evolution
 
@@ -130,6 +135,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-06-12T01:31:16.761Z
+Last session: 2026-07-09T23:24:57.965Z
 Stopped at: Completed 09-03-PLAN.md
 Resume file: None
