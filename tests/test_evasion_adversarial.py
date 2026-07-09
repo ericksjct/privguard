@@ -1,0 +1,160 @@
+"""P2 adversarial evasion suite (Phase 10 / TEST-07, handoff Tier 1).
+
+One test per evasion vector, each pinning CURRENT detect() behavior with an
+explicit assertion. Vectors that pass through undetected carry a ``# RISCO:``
+comment and a matching entry in the plan SUMMARY RISCO list — never silenced,
+never xfail-and-forget. No production code is changed here (handoff rule).
+
+Fixtures are the canonical synthetic constants (RAW_CPF, SECRET_LOOKING) from
+test_claude_hooks. Hostile/evasion variants are derived programmatically at
+runtime (translate tables, join with zero-width chars, base64/hex/url encode);
+no new realistic Brazilian PII literal is introduced.
+
+Behavior snapshot at authoring time (min_score=0.7):
+  DETECTED     : fullwidth_digits, code_fence, markdown_link, code_comment
+  PASS-THROUGH : cyrillic_homoglyph, zero_width, combining_chars,
+                 fragmented_lines, whitespace_injected, b64_secret,
+                 hex_secret, urlenc_secret, code_concat, fstring_concat
+"""
+
+from __future__ import annotations
+
+import base64
+
+from privguard.detection import detect
+
+from test_claude_hooks import RAW_CPF, SECRET_LOOKING
+
+_THRESHOLD = 0.7
+
+# Fullwidth digit translation table (ASCII 0-9 → U+FF10..U+FF19).
+_FULLWIDTH = {ord(str(d)): chr(0xFF10 + d) for d in range(10)}
+_ZERO_WIDTH = "​"  # zero-width space
+_COMBINING_ACUTE = "́"
+
+
+def _has_cpf(text: str) -> bool:
+    return any(h.kind == "BR_CPF" for h in detect(text, min_score=_THRESHOLD))
+
+
+def _any_hit(text: str) -> bool:
+    return bool(detect(text, min_score=_THRESHOLD))
+
+
+# ---------------------------------------------------------------------------
+# Unicode obfuscation
+# ---------------------------------------------------------------------------
+
+
+def test_fullwidth_digit_cpf_is_detected() -> None:
+    # Fullwidth digits: \d in the regex matches Unicode decimal digits, so a
+    # fullwidth-digit CPF is still caught. Current behavior = DETECTED.
+    text = RAW_CPF.translate(_FULLWIDTH)
+    assert _has_cpf(text)
+
+
+def test_cyrillic_homoglyph_cpf_passes_through() -> None:
+    # RISCO: Cyrillic homoglyph digits (е.g. З/О swapped for 3/0) break the
+    # ASCII-digit regex; the CPF passes through undetected. Documented, not fixed.
+    text = RAW_CPF.replace("3", "З").replace("0", "О")
+    assert not _any_hit(text)
+
+
+def test_zero_width_chars_inside_cpf_pass_through() -> None:
+    # RISCO: zero-width spaces injected between every character break the
+    # contiguous-digit match; CPF passes through. Documented, not fixed.
+    text = _ZERO_WIDTH.join(RAW_CPF)
+    assert not _any_hit(text)
+
+
+def test_combining_chars_on_cpf_digits_pass_through() -> None:
+    # RISCO: combining acute accents appended to each digit defeat the match;
+    # CPF passes through. Documented, not fixed.
+    text = "".join(c + _COMBINING_ACUTE if c.isdigit() else c for c in RAW_CPF)
+    assert not _any_hit(text)
+
+
+# ---------------------------------------------------------------------------
+# Fragmentation
+# ---------------------------------------------------------------------------
+
+
+def test_cpf_fragmented_across_lines_passes_through() -> None:
+    # RISCO: a newline splitting the CPF breaks the single-line regex; the
+    # fragmented value passes through. Documented, not fixed.
+    text = RAW_CPF[:8] + "\n" + RAW_CPF[8:]
+    assert not _any_hit(text)
+
+
+def test_whitespace_injected_between_digits_passes_through() -> None:
+    # RISCO: a space between every character defeats the contiguous match;
+    # CPF passes through. Documented, not fixed.
+    text = " ".join(RAW_CPF)
+    assert not _any_hit(text)
+
+
+# ---------------------------------------------------------------------------
+# Encoding
+# ---------------------------------------------------------------------------
+
+
+def test_base64_encoded_secret_passes_through() -> None:
+    # RISCO: a base64-encoded secret is opaque to the plaintext token regexes;
+    # passes through. Documented, not fixed (no decode-and-rescan stage exists).
+    text = "payload=" + base64.b64encode(SECRET_LOOKING.encode()).decode()
+    assert not _any_hit(text)
+
+
+def test_hex_encoded_secret_passes_through() -> None:
+    # RISCO: hex-encoded secret passes through undetected. Documented, not fixed.
+    text = "payload=" + SECRET_LOOKING.encode().hex()
+    assert not _any_hit(text)
+
+
+def test_url_encoded_secret_passes_through() -> None:
+    # RISCO: percent-encoded secret passes through undetected. Documented, not fixed.
+    text = "payload=" + "".join(f"%{b:02X}" for b in SECRET_LOOKING.encode())
+    assert not _any_hit(text)
+
+
+# ---------------------------------------------------------------------------
+# Code concatenation
+# ---------------------------------------------------------------------------
+
+
+def test_string_concatenation_cpf_passes_through() -> None:
+    # RISCO: CPF split across a "a" + "b" concatenation is never reassembled by
+    # the static regex scan; passes through. Documented, not fixed.
+    text = 'cpf = "' + RAW_CPF[:7] + '" + "' + RAW_CPF[7:] + '"'
+    assert not _has_cpf(text)
+
+
+def test_fstring_concatenation_cpf_passes_through() -> None:
+    # RISCO: f-string reassembly of a CPF is invisible to static scanning;
+    # passes through. Documented, not fixed.
+    text = 'p = "' + RAW_CPF[:7] + '"\ncpf = f"{p}' + RAW_CPF[7:] + '"'
+    assert not _has_cpf(text)
+
+
+# ---------------------------------------------------------------------------
+# PII embedded in markup — these ARE detected (regex is context-blind)
+# ---------------------------------------------------------------------------
+
+
+def test_cpf_inside_code_fence_is_detected() -> None:
+    # A well-formed CPF inside a markdown code fence is still matched; the
+    # regex does not honor fence boundaries. Current behavior = DETECTED.
+    text = "```python\ncpf = \"" + RAW_CPF + "\"\n```"
+    assert _has_cpf(text)
+
+
+def test_cpf_inside_markdown_link_is_detected() -> None:
+    # A CPF embedded in a markdown link target is still matched. DETECTED.
+    text = "[cadastro](https://example.invalid/lookup?cpf=" + RAW_CPF + ")"
+    assert _has_cpf(text)
+
+
+def test_cpf_inside_code_comment_is_detected() -> None:
+    # A CPF in a code comment is still matched (context-blind regex). DETECTED.
+    text = "# valor de teste: " + RAW_CPF
+    assert _has_cpf(text)
