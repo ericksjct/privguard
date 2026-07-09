@@ -59,6 +59,7 @@ Requirements for the initial release. Each maps to roadmap phases.
 - [x] **TEST-04**: Tests cover protected path normalization for Windows paths, mixed separators, relative traversal, quoted paths, and project-root-relative paths.
 - [x] **TEST-05**: Tests cover Claude prompt and tool hook JSON payloads, malformed input, exit codes, policy modes, and sanitized output.
 - [x] **TEST-06**: Tests cover fail-closed behavior when detection, masking, configuration, or client capability validation fails.
+- [ ] **TEST-07**: Failure-injection, adversarial-evasion, ReDoS, mutation, and property-based tests prove that detector failures and evasion attempts never result in silent pass-through, with a branch-coverage gate enforced from the measured baseline.
 
 ### Documentation
 
@@ -140,12 +141,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-04 | Phase 5 | Complete |
 | TEST-05 | Phase 5 | Complete |
 | TEST-06 | Phase 5 | Complete |
+| TEST-07 | Phase 10 | Pending |
 | DOC-01 | Phase 7 | Complete |
 | MAINT-01 | Phase 7 | Complete |
 
 **Coverage:**
-- v1 requirements: 34 total
-- Mapped to phases: 34
+- v1 requirements: 35 total
+- Mapped to phases: 35
 - Unmapped: 0
 
 ---

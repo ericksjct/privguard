@@ -20,6 +20,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 6: Milestone Cleanup** - v1 documentation, packaging, and public API surface accurately reflect the verified state of the system at audit close (closes tech-debt items from v1.0 milestone audit).
 - [x] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (PT + EN) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 - [ ] **Phase 9: Milestone v1.0 Audit Cleanup** - All v1.0 audit tech-debt is swept: REQUIREMENTS/ROADMAP state matches the verified system, README documents the shipped block/warn/mask selector, and cleanup.py robustness fixes land (closes tech-debt items from the 2026-06-10 audit).
+- [ ] **Phase 10: Test Hardening (fail-closed first)** - Failure-path, evasion, and robustness coverage proves the fail-closed promise: injected detector failures always block, adversarial evasion vectors are documented or flagged RISCO, and a branch-coverage gate is enforced.
 
 ## Phase Details
 
@@ -158,6 +159,23 @@ Plans:
 - [x] 09-02-PLAN.md — Rewrite README.md (PT) + README.en.md (EN) warn-vs-block FAQ to document the PII_GUARD_MODE block/warn/mask selector
 - [x] 09-03-PLAN.md — cleanup.py robustness fixes (WR-01 guarded read, WR-02 explicit headers, IN-01 dead-code) + BLOCKING full regression gate
 
+### Phase 10: Test Hardening (fail-closed first)
+**Goal**: The fail-closed promise is proven, not assumed: every injected detector failure results in a block, every adversarial evasion vector is tested and documented (pass-throughs flagged RISCO, never silenced), checksum validators survive mutation and property-based testing, and a branch-coverage gate is enforced from a measured baseline.
+**Depends on**: Phase 9
+**Requirements**: TEST-07
+**Source**: Imported from `.planning/handoff_lacunas.md` (Tiers 1–2, the handoff's non-negotiable core; Tiers 3–4 remain in the handoff as follow-up candidates)
+**Success Criteria** (what must be TRUE):
+  1. Branch-coverage baseline is measured and recorded before any new test is written.
+  2. Every injected detector failure (exception, missing Presidio, timeout, oversized input, invalid config) results in a block decision — zero exception-to-allow paths.
+  3. Every evasion vector (homoglyphs, zero-width, fragmentation, encoding, concatenation, code fences) has a test documenting current behavior; pass-throughs are RISCO items.
+  4. Mutation score over checksum/decision code is reported and surviving mutants become tests; hypothesis properties hold for validators and masking idempotence.
+  5. `--cov-fail-under` (branch) is active from the measured baseline, and the pre-existing suite still passes.
+**Plans**: 2 plans
+
+Plans:
+- [ ] 10-01-PLAN.md — Baseline + dev-deps, then Tier 1: fail-closed injection (P1), adversarial evasion (P2), ReDoS/size guard (P3)
+- [ ] 10-02-PLAN.md — Tier 2: property-based validators (P5), checksum edges (P6), FP corpus/overlap (P7), mutation + coverage gate (P4)
+
 ## Backlog
 
 ### Phase 999.1: WebFetch Domain Allowlist (BACKLOG)
@@ -235,6 +253,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8, then back
 | 999.3 Masking Gaps (RG/CNPJ/PIX) | 1/1 | Complete | 2026-05-21 |
 | 999.4 CPF Leniency Mode | 2/2 | Complete | 2026-05-21 |
 | 999.5 Detection Hardening v2 | 4/4 | Complete | 2026-05-24 |
+| 10. Test Hardening | 0/2 | Not started | — |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 
