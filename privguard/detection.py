@@ -356,9 +356,17 @@ def detect(
 ) -> list[Hit]:
     use_lenient = _lenient_default() if lenient is None else lenient
     use_detect_names = _detect_names_default() if detect_names is None else detect_names
+    # Offset-safe normalization: scan the normalized string so homoglyph /
+    # zero-width / combining evasions (R2/R3/R4) are caught, then rebase every
+    # Hit onto the ORIGINAL text so masking/diagnostics offsets stay correct.
+    # Identity fast-path: benign input normalizes to itself -> no remap, no
+    # perf cost, byte-for-byte identical behavior to before.
+    norm, orig_index = _normalize_for_detection(text)
+    identity = norm == text
+    scan = text if identity else norm
     raw: list[Hit] = []
     for entry in PATTERNS:
-        for m in entry.regex.finditer(text):
+        for m in entry.regex.finditer(scan):
             value = m.group(0)
             # Skip hits whose checksum fails entirely — do NOT emit a
             # downgraded score that would shadow other kinds covering the
@@ -379,7 +387,9 @@ def detect(
                            entry.score, entry.reason_code))
 
     if use_detect_names:
-        raw.extend(_find_name_hits(text))
+        raw.extend(_find_name_hits(scan))
+    if not identity:
+        raw = [_map_hit_to_original(h, text, orig_index) for h in raw]
     raw = [h for h in raw if h.score >= min_score]
     raw.sort(key=lambda h: (-h.score, -(h.end - h.start), h.start))
     kept: list[Hit] = []
