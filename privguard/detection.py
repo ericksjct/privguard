@@ -5,6 +5,7 @@ from __future__ import annotations
 import functools
 import os
 import re
+import unicodedata
 from dataclasses import dataclass
 from importlib.resources import files as _importlib_files
 from typing import Callable
@@ -291,6 +292,60 @@ def _find_name_hits(text: str) -> list[Hit]:
 _LENIENT_KINDS: frozenset[str] = frozenset({"BR_CPF", "BR_CNPJ"})
 
 _LENIENT_SCORES: dict[str, float] = {"BR_CPF": 0.75, "BR_CNPJ": 0.75}
+
+
+# Confusable digit homoglyphs → ASCII digit. Length-preserving 1:1 map only, so
+# the offset index built by _normalize_for_detection stays exact. CONSERVATIVE
+# and digits-only: fullwidth ０-９ (U+FF10–FF19) plus the specific Cyrillic
+# homoglyphs the adversarial suite injects (Ze→3, O→0). Full NFKC/NFKD is
+# deliberately NOT used — it is length-changing (ligatures, compat decomposition)
+# and would break the offset map for little threat-model gain. Latin-letter
+# homoglyphs are intentionally NOT mapped (would mangle legit text, spike FP).
+_CONFUSABLE_DIGITS: dict[int, str] = {
+    **{0xFF10 + d: str(d) for d in range(10)},  # fullwidth ０-９
+    0x0417: "3",  # CYRILLIC CAPITAL LETTER ZE (З) → 3
+    0x041E: "0",  # CYRILLIC CAPITAL LETTER O  (О) → 0
+}
+
+
+def _normalize_for_detection(text: str) -> tuple[str, list[int]]:
+    """Offset-safe normalization pass for detection scanning.
+
+    Returns ``(normalized, orig_index)`` where ``orig_index[i]`` is the offset
+    in the ORIGINAL ``text`` of normalized char ``i``. Two length-controlled
+    transforms only, so the map is exact:
+
+    - confusable digit homoglyphs translated 1:1 (offset preserved), and
+    - zero-width/format (Cf) and nonspacing-combining (Mn) chars dropped
+      (recorded as nothing).
+
+    Benign input without homoglyphs/Cf/Mn normalizes to itself (identity),
+    letting detect() take a fast path that behaves exactly as before.
+    """
+    out: list[str] = []
+    idx: list[int] = []
+    for i, ch in enumerate(text):
+        repl = _CONFUSABLE_DIGITS.get(ord(ch))
+        if repl is not None:
+            out.append(repl)
+            idx.append(i)
+            continue
+        if unicodedata.category(ch) in ("Cf", "Mn"):
+            continue  # drop zero-width / combining marks
+        out.append(ch)
+        idx.append(i)
+    return "".join(out), idx
+
+
+def _map_hit_to_original(h: Hit, text: str, idx: list[int]) -> Hit:
+    """Rebase a Hit's start/end/value from normalized offsets onto ``text``."""
+    if h.end <= h.start:  # empty match guard (patterns here never match empty)
+        pos = idx[h.start] if h.start < len(idx) else len(text)
+        return Hit(h.kind, pos, pos, "", h.score, h.reason_code, h.source)
+    orig_start = idx[h.start]
+    orig_end = idx[h.end - 1] + 1
+    return Hit(h.kind, orig_start, orig_end, text[orig_start:orig_end],
+               h.score, h.reason_code, h.source)
 
 
 def detect(
