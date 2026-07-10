@@ -22,7 +22,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 7: Project README + Repo Hygiene** - First-time user can read a bilingual (PT + EN) README and clean up repo cruft via a config-driven, fail-safe cleanup mechanism.
 - [ ] **Phase 9: Milestone v1.0 Audit Cleanup** - All v1.0 audit tech-debt is swept: REQUIREMENTS/ROADMAP state matches the verified system, README documents the shipped block/warn/mask selector, and cleanup.py robustness fixes land (closes tech-debt items from the 2026-06-10 audit).
 - [x] **Phase 10: Test Hardening (fail-closed first)** - Failure-path, evasion, and robustness coverage proves the fail-closed promise: injected detector failures always block, adversarial evasion vectors are documented or flagged RISCO, and a branch-coverage gate is enforced. (completed 2026-07-09)
-- [ ] **Phase 11: Fail-Closed Hardening** - Close the phase-10 findings: the guard blocks on detector error and oversized input (fail-closed, not fail-open), the ReDoS-class regex is made backtracking-safe, and detection is hardened against common evasion (normalization, fragmentation/concatenation, encoded secrets) without regressing the false-positive rate.
+- [x] **Phase 11: Fail-Closed Hardening** - Close the phase-10 findings: the guard blocks on detector error and oversized input (fail-closed, not fail-open), the ReDoS-class regex is made backtracking-safe, and detection is hardened against common evasion (normalization, fragmentation/concatenation, encoded secrets) without regressing the false-positive rate. (completed 2026-07-10)
 
 ## Phase Details
 
@@ -229,14 +229,14 @@ Plans:
   4. Checksum-gated reassembly detects fragmented and concatenated Brazilian identifiers (R5, R6, R10, R11); single-layer base64/hex/URL-encoded secrets are caught by decode-and-rescan (R7, R8, R9) — each only where it holds the false-positive corpus at/near 0.0.
   5. The full synthetic suite stays green under the enforced branch-coverage gate, and every phase-10 RISCO test is flipped from "pass-through pinned" to "fixed" or explicitly re-documented as an accepted limitation.
 
-**Plans**: 3/4 plans executed
+**Plans**: 4/4 plans complete
 
 Plans:
 
 - [x] 11-01-PLAN.md — Fail-closed core: exception→block wrapper on both hooks (R1), input-size cap (D2), backtracking-safe EMAIL regex (D3), SUS leading-digit range check (R12)
 - [x] 11-02-PLAN.md — Offset-safe normalization pass in detect() for homoglyph/zero-width/combining evasion (R2, R3, R4), FP-corpus gated
 - [x] 11-03-PLAN.md — Checksum-gated denoised rescan for fragmentation + concatenation (R5, R6, R10, R11), FP-corpus gated
-- [ ] 11-04-PLAN.md — Decode-and-rescan for single-layer encoded secrets (R7, R8, R9), FP-corpus gated
+- [x] 11-04-PLAN.md — Decode-and-rescan for single-layer encoded secrets (R7, R8, R9), FP-corpus gated
 
 ## Backlog
 
@@ -323,7 +323,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8, then back
 | 999.4 CPF Leniency Mode | 2/2 | Complete | 2026-05-21 |
 | 999.5 Detection Hardening v2 | 4/4 | Complete | 2026-05-24 |
 | 10. Test Hardening | 2/2 | Complete   | 2026-07-09 |
-| 11. Fail-Closed Hardening | 3/4 | In Progress|  |
+| 11. Fail-Closed Hardening | 4/4 | Complete   | 2026-07-10 |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 
