@@ -97,11 +97,13 @@ def test_email_bait_is_super_linear_documented_behavior() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_oversized_input_has_no_size_guard_and_still_detects() -> None:
-    # DECISAO: detect() applies no maximum-input-size guard. A ~2 MB benign
-    # blob with a trailing synthetic CPF is scanned in full and the CPF is
-    # still found — no truncation, no rejection, no exception. This pins the
-    # absence of a size cap (see also test_fail_closed_injection 10 MB case).
+def test_detect_has_no_size_cap_for_the_cli_path() -> None:
+    # D2 (fixed in 11-01): the size guard lives at the HOOK boundary
+    # (hooks.MAX_INPUT_CHARS), NOT inside detect() — the CLI scan/mask path must
+    # still process large files without truncation. So detect() deliberately has
+    # no size cap: a ~2 MB benign blob with a trailing synthetic CPF is scanned
+    # in full and the CPF is still found. The oversized-input BLOCK is asserted
+    # at the hook in test_fail_closed_injection (10 MB → input_too_large).
     blob = ("texto publico seguro " * (2 * 1024 * 1024 // 21)) + f" CPF {SYNTH_CPF}"
     hits = detect(blob, min_score=0.7)
     assert any(h.kind == "BR_CPF" for h in hits)

@@ -140,6 +140,24 @@ def check_glob_grep(tool_input: dict) -> tuple[bool, str]:
     return True, ""
 
 
+MAX_INPUT_CHARS = 1_000_000  # 1 MB; override via PII_GUARD_MAX_INPUT_CHARS
+
+
+def _max_input_chars() -> int:
+    """Untrusted-input size cap for the hook boundary, defensively parsed."""
+    try:
+        limit = int(os.environ.get("PII_GUARD_MAX_INPUT_CHARS", str(MAX_INPUT_CHARS)))
+    except ValueError:
+        return MAX_INPUT_CHARS
+    if limit <= 0:
+        return MAX_INPUT_CHARS
+    return limit
+
+
+def _too_large(s: str) -> bool:
+    return len(s) > _max_input_chars()
+
+
 def _inline_threshold() -> float:
     """Return the PII detection threshold, shared by prompt and tool surfaces."""
     try:
@@ -244,6 +262,9 @@ def _main_user_prompt_impl() -> int:
     prompt = payload.get("prompt", "") or ""
     if not prompt.strip():
         return 0
+
+    if _too_large(prompt):
+        return deny("PII-GUARD", "input_too_large")
 
     threshold = _inline_threshold()
     mode = os.environ.get("PII_GUARD_MODE", "block")
@@ -385,6 +406,12 @@ def _main_pre_tool_impl() -> int:
         threshold = _inline_threshold()
         mode = os.environ.get("PII_GUARD_MODE", "block")
         for text in _iter_text_values(tool_input):
+            if _too_large(text):
+                return _deny_pre_tool(
+                    reason_code="input_too_large",
+                    category="llm_orchestration",
+                    command_count=1,
+                )
             hits = list(detect(text, min_score=threshold))
             if not hits:
                 continue
@@ -430,6 +457,12 @@ def _main_pre_tool_impl() -> int:
 
     if tool in ("Bash", "PowerShell"):
         command = str(tool_input.get("command", "") or "")
+        if _too_large(command):
+            return _deny_pre_tool(
+                reason_code="input_too_large",
+                category="bash",
+                command_count=1,
+            )
         classification = classify_command(command, min_score=_inline_threshold())
         if classification.is_blocked:
             return _deny_pre_tool(

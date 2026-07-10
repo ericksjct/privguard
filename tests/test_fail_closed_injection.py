@@ -199,13 +199,13 @@ def _big_text(mb: int) -> str:
     return (chunk * (target // len(chunk) + 1))[:target]
 
 
-def test_10mb_prompt_with_pii_blocks_without_crash(
+def test_10mb_prompt_with_pii_blocks_on_size_guard(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # 10 MB of benign filler with one synthetic CPF appended: the hook must
-    # reach the block decision without crashing or OOM. Measured locally at
-    # roughly 8.5s per detect() call — latency documented in the SUMMARY.
+    # D2 (fixed in 11-01): a 10 MB prompt exceeds MAX_INPUT_CHARS (1 MB) and is
+    # blocked fail-closed at the hook boundary BEFORE any regex scan runs —
+    # reason=input_too_large, exit 2. No PII-derived text leaks.
     prompt = _big_text(10) + f" CPF {RAW_CPF}"
 
     assert run_user_prompt(monkeypatch, {"prompt": prompt}) == 2
@@ -213,23 +213,24 @@ def test_10mb_prompt_with_pii_blocks_without_crash(
     captured = capsys.readouterr()
     output = captured.out + captured.err
     assert "BLOQUEADO" in captured.err
-    assert "reason=pii_detected" in output
+    assert "reason=input_too_large" in output
     assert_no_prompt_derived_text(output)
 
 
-def test_10mb_clean_prompt_currently_allowed_no_size_guard(
+def test_10mb_clean_prompt_blocked_by_size_guard(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # DECISAO: no input-size guard exists — a clean 10 MB prompt is fully
-    # scanned (~8.5s) and allowed. There is no explicit rejection of oversized
-    # inputs; a size cap before regex is a candidate fix thread (see also
-    # test_redos_size_guard.py). This test pins the current allow behavior.
-    assert run_user_prompt(monkeypatch, {"prompt": _big_text(10)}) == 0
+    # D2 (fixed in 11-01): oversized input is now rejected fail-closed even when
+    # it is clean — the hook cannot afford to scan an arbitrarily large blob, so
+    # over MAX_INPUT_CHARS it blocks (exit 2, reason=input_too_large). This flips
+    # the phase-10 "no size guard, allowed" pin to the fixed behavior.
+    assert run_user_prompt(monkeypatch, {"prompt": _big_text(10)}) == 2
 
     captured = capsys.readouterr()
-    assert captured.out == ""
-    assert captured.err == ""
+    output = captured.out + captured.err
+    assert "BLOQUEADO" in captured.err
+    assert "reason=input_too_large" in output
 
 
 # ---------------------------------------------------------------------------
