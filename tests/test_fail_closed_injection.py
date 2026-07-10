@@ -159,11 +159,14 @@ def test_slow_detector_still_blocks_no_internal_timeout(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # DECISAO: privguard has no internal detector timeout. A slow detector
-    # simply delays the decision; the eventual decision is still block. A HUNG
-    # detector, however, relies on Claude Code's external hook timeout, which
-    # is treated as a non-blocking error (fail-open on their side). Candidate
-    # fix thread: internal watchdog that converts timeout → block.
+    # DECISAO D1 — OUT OF SCOPE for v1 (phase-close disposition, 11-04):
+    # privguard has no internal detector timeout. A slow detector simply delays
+    # the decision; the eventual decision is still block (asserted here). A HUNG
+    # detector relies on Claude Code's EXTERNAL hook timeout, which their runtime
+    # treats as a non-blocking error (fail-open on their side) — privguard cannot
+    # override that from inside the hook process. An internal watchdog that
+    # converts timeout → block is the documented v2 upgrade path, not a v1
+    # deliverable. Definitive disposition recorded in the 11-04 SUMMARY table.
     calls: list[float] = []
 
     def slow_detect(text, *a, **kw):  # noqa: ANN001
