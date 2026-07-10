@@ -205,6 +205,14 @@ privguard é uma ferramenta focada e local-first. Deliberadamente NÃO:
 - **Usa PII brasileiro real ou segredos de produção em testes, fixtures, exemplos ou commits.**
   Todos os valores neste repositório de testes são sintéticos. Consulte
   [Política de fixture-apenas-sintéticos](#política-de-fixture-apenas-sintéticos).
+- **Garante detecção contra um ofuscador deliberado.** O privguard é um scanner local que
+  eleva o custo de evasão acidental e de baixo esforço — não é uma barreira contra um atacante
+  motivado. A detecção resiste a homoglyphs, caracteres zero-width/combining, fragmentação e
+  concatenação de identificadores com checksum, e segredos codificados em uma camada
+  (base64/hex/URL). Ela **não** cobre, por design: interpolação em runtime (`f"{cpf}"` só se
+  monta ao executar, não no texto), codificação em múltiplas camadas, e identificadores numéricos
+  brasileiros escondidos dentro de conteúdo codificado (uma sequência curta de dígitos gera
+  falso positivo demais após decodificar um blob arbitrário).
 
 ## Política de fixture-apenas-sintéticos
 
@@ -258,6 +266,23 @@ aviso que o usuário pode ignorar não satisfaz a garantia de privacidade. O mod
 encaminha automaticamente um payload sanitizado — o esquema `UserPromptSubmit` do Claude Code não
 tem campo de substituição de prompt, então bloquear e imprimir a versão mascarada para cópia
 manual é o único caminho seguro. O padrão permanece fail-closed block.
+
+### O que acontece se o detector falhar ou o input for gigante?
+
+Ambos bloqueiam — fail-closed é o padrão mesmo quando algo dá errado no próprio guard.
+
+- **Erro no detector:** se a detecção lançar uma exceção, o hook bloqueia (código de saída 2)
+  com `reason=detector_error` em vez de deixar o prompt passar. Uma falha do detector nunca vira
+  liberação silenciosa.
+- **Input grande demais:** prompts e comandos acima de um limite de caracteres são bloqueados com
+  `reason=input_too_large` antes de serem escaneados, evitando que um input hostil trave o hook.
+  O limite padrão é 1.000.000 de caracteres (~1 MB) e pode ser ajustado com a variável de ambiente
+  `PII_GUARD_MAX_INPUT_CHARS`. O limite só se aplica na fronteira do hook; a CLI `scan`/`mask`
+  continua processando arquivos grandes normalmente.
+
+Valores reassemblados a partir de fragmentação/concatenação aparecem com
+`reason=reassembled_checksum_valid`; segredos encontrados dentro de conteúdo codificado, com
+`reason=encoded_secret_<codificação>`.
 
 ### Como estendo os padrões de limpeza?
 

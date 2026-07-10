@@ -192,6 +192,7 @@ privguard is a focused, local-first tool. It deliberately does NOT:
 - **Adapt to LangChain, LlamaIndex, or generic SDK pipelines.** The supported integration is Claude Code (`block-supported`); Codex is `experimental block-only`. See [Capabilities matrix](#capabilities-matrix).
 - **Protect unsupported clients.** Clients without tested interception (no documented hook event, no synthetic interception proof) are not labeled as protected — they are labeled `unsupported`.
 - **Use real Brazilian PII or production secrets in tests, fixtures, examples, or commits.** Every value in this repository's tests is synthetic. See [Synthetic-fixture-only policy](#synthetic-fixture-only-policy).
+- **Guarantee detection against a deliberate obfuscator.** privguard is a local scanner that raises the cost of accidental and low-effort evasion — it is not a barrier against a motivated attacker. Detection resists homoglyphs, zero-width/combining characters, fragmentation and concatenation of checksum-bearing identifiers, and single-layer encoded secrets (base64/hex/URL). It does **not** cover, by design: runtime interpolation (`f"{cpf}"` only assembles at execution, not in the text), multi-layer encoding, and numeric Brazilian identifiers hidden inside encoded content (a short digit run false-positives too easily after decoding an arbitrary blob).
 
 ## Synthetic-fixture-only policy
 
@@ -222,6 +223,15 @@ Blocking is the **default**, fail-closed behavior — the core value of privguar
 | `mask` | `mask` | Still blocks (exit 2); shows a masked version in stderr for you to copy-paste and resubmit manually; if the mask cannot be verified → blocks with `mask_verification_failed` | 2 | Yes (block + show-masked) |
 
 The `warn` mode is **explicitly non-protective** and intended for local development only: a warning the user can ignore does not satisfy the privacy guarantee. The `mask` mode never auto-forwards a sanitized payload — Claude Code's `UserPromptSubmit` schema has no prompt-replacement field, so blocking and printing the masked version for manual copy-paste is the only safe path. The default remains fail-closed block.
+
+### What happens if the detector fails or the input is huge?
+
+Both block — fail-closed is the default even when something goes wrong inside the guard itself.
+
+- **Detector error:** if detection raises an exception, the hook blocks (exit code 2) with `reason=detector_error` instead of letting the prompt through. A detector failure never becomes a silent allow.
+- **Oversized input:** prompts and commands above a character limit are blocked with `reason=input_too_large` before being scanned, preventing a hostile input from hanging the hook. The default limit is 1,000,000 characters (~1 MB) and can be tuned with the `PII_GUARD_MAX_INPUT_CHARS` environment variable. The cap applies only at the hook boundary; the `scan`/`mask` CLI still processes large files normally.
+
+Values reassembled from fragmentation/concatenation surface with `reason=reassembled_checksum_valid`; secrets found inside encoded content surface with `reason=encoded_secret_<encoding>`.
 
 ### How do I extend the cleanup patterns?
 
