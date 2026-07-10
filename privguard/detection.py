@@ -2,10 +2,12 @@
 
 from __future__ import annotations
 
+import base64
 import functools
 import os
 import re
 import unicodedata
+import urllib.parse
 from dataclasses import dataclass
 from importlib.resources import files as _importlib_files
 from typing import Callable
@@ -425,6 +427,80 @@ def _denoised_hits(
     return out
 
 
+# Encoded-secret pass: only HIGH-confidence recognizable secret kinds are
+# rescanned in decoded content. Numeric Brazilian identifiers are deliberately
+# EXCLUDED — a short digit run false-positives trivially after decoding an
+# arbitrary byte blob, so we never rescan for them. Selected by kind (not by
+# score) so the set is explicit and auditable; JWT (0.90) is included because a
+# JWT is unambiguously a secret regardless of its score.
+_ENCODED_SECRET_KINDS: frozenset[str] = frozenset({
+    "API_KEY", "AWS_KEY", "TOKEN", "JWT", "DATABASE_URL",
+    "PASSWORD_ASSIGNMENT", "SECRET_ASSIGNMENT", "ENV_VAR_ASSIGNMENT",
+})
+_ENCODED_SECRET_PATTERNS: list[PatternEntry] = [
+    p for p in PATTERNS if p.kind in _ENCODED_SECRET_KINDS
+]
+
+# Candidate encoded-blob regexes, conservative min lengths to avoid noise:
+# base64 (>=24 body chars), hex (>=16 byte-pairs = 32 chars), and percent/URL
+# runs. Short blobs are skipped — the min length is the first FP bound before
+# the decode-and-secret-match gate.
+_B64_BLOB_RE = re.compile(r"[A-Za-z0-9+/]{24,}={0,2}")
+_HEX_BLOB_RE = re.compile(r"(?:[0-9a-fA-F]{2}){16,}")
+_URLENC_BLOB_RE = re.compile(r"(?:%[0-9A-Fa-f]{2})+")
+
+
+def _decode_b64(blob: str) -> str:
+    return base64.b64decode(blob, validate=True).decode("utf-8")
+
+
+def _decode_hex(blob: str) -> str:
+    return bytes.fromhex(blob).decode("utf-8")
+
+
+def _decode_url(blob: str) -> str:
+    return urllib.parse.unquote(blob, errors="strict")
+
+
+# (encoding-name, blob-regex, single-layer decoder). ValueError covers every
+# failure mode: binascii.Error (bad base64/hex) and UnicodeDecodeError (non-UTF-8
+# result) are both ValueError subclasses, so a failed or non-text decode is
+# skipped silently.
+_ENCODED_CANDIDATES = (
+    ("base64", _B64_BLOB_RE, _decode_b64),
+    ("hex", _HEX_BLOB_RE, _decode_hex),
+    ("url", _URLENC_BLOB_RE, _decode_url),
+)
+
+
+def _scan_encoded_secrets(text: str) -> list[Hit]:
+    """Single-layer decode-and-rescan for secrets hidden in encoding (R7/R8/R9).
+
+    Finds candidate base64/hex/URL-encoded blobs above a minimum length, decodes
+    each single-layer, and rescans the decoded text with ONLY the high-confidence
+    secret patterns. On a match it emits ONE Hit spanning the ENCODED blob in the
+    original text (the point is to block the outbound encoded payload; the exact
+    sub-span inside the blob is irrelevant). Ordinary blobs (hashes, IDs, images)
+    either fail to decode to UTF-8 or contain no secret, so they produce no hit.
+    Decode failures and non-UTF-8 results are skipped silently.
+    """
+    hits: list[Hit] = []
+    for enc, regex, decoder in _ENCODED_CANDIDATES:
+        for m in regex.finditer(text):
+            try:
+                decoded = decoder(m.group(0))
+            except ValueError:
+                continue  # bad encoding or non-UTF-8 result
+            for entry in _ENCODED_SECRET_PATTERNS:
+                if entry.regex.search(decoded):
+                    hits.append(Hit(
+                        entry.kind, m.start(), m.end(), m.group(0),
+                        entry.score, f"encoded_secret_{enc}",
+                    ))
+                    break  # one hit per encoded blob
+    return hits
+
+
 def detect(
     text: str,
     min_score: float = 0.6,
@@ -478,6 +554,13 @@ def detect(
     denoised, den_index = _denoise(norm, orig_index)
     if len(denoised) < len(norm):
         raw.extend(_denoised_hits(denoised, den_index, text, raw))
+    # Encoded-secret pass (R7/R8/R9): decode single-layer base64/hex/URL blobs in
+    # the ORIGINAL text and rescan for high-confidence secrets only. Scans the
+    # original directly (encoded secrets are ASCII, unaffected by normalization)
+    # so the emitted hit spans the original encoded blob. A true no-op cost on
+    # text with no qualifying blobs. Merged before the threshold/overlap/sort so
+    # a plaintext hit covering the same span wins deterministically.
+    raw.extend(_scan_encoded_secrets(text))
     raw = [h for h in raw if h.score >= min_score]
     raw.sort(key=lambda h: (-h.score, -(h.end - h.start), h.start))
     kept: list[Hit] = []
