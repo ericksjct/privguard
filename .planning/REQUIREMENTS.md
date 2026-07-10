@@ -22,6 +22,7 @@ Requirements for the initial release. Each maps to roadmap phases.
 - [x] **DET-04**: Guard can detect secret-like values including API keys, tokens, passwords, database URLs, and environment variable assignments.
 - [x] **DET-05**: Guard can classify protected paths including `.env`, `.env.*`, `data_sensivel/**`, dumps, credential-like files, and secret-like filenames without reading file contents.
 - [x] **DET-06**: Lightweight hook detection and Presidio-backed detection share validator semantics and synthetic fixtures to prevent drift.
+- [ ] **DET-07**: Guard fails closed on operational failure (a detector exception or oversized input blocks with exit code 2, never passes through) and resists common evasion — Unicode normalization (homoglyph/zero-width/combining), separator-fragmentation and string-concatenation reassembly gated by checksum, and single-layer encoded-secret decode-and-rescan — without regressing the measured false-positive rate. Detector regexes are backtracking-safe (no ReDoS). Adversarial completeness against a motivated exfiltrator is explicitly out of scope for a client-side scanner.
 
 ### Masking
 
@@ -142,13 +143,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | TEST-05 | Phase 5 | Complete |
 | TEST-06 | Phase 5 | Complete |
 | TEST-07 | Phase 10 | Complete |
+| DET-07 | Phase 11 | Pending |
 | DOC-01 | Phase 7 | Complete |
 | MAINT-01 | Phase 7 | Complete |
 
 **Coverage:**
 
-- v1 requirements: 35 total
-- Mapped to phases: 35
+- v1 requirements: 36 total
+- Mapped to phases: 36
 - Unmapped: 0
 
 ---
