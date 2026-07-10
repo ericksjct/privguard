@@ -4,11 +4,11 @@ milestone: v1.0
 milestone_name: Audit Cleanup
 current_phase: 10
 current_phase_name: test-hardening
-status: verifying
-stopped_at: Completed 09-03-PLAN.md
+status: verified_human_needed
+stopped_at: Phase 10 verified (4/5) — R1 fail-open + mutmut deferral need owner decision
 last_updated: "2026-07-09T23:46:13.541Z"
 last_activity: 2026-07-09
-last_activity_desc: Phase 10 execution started
+last_activity_desc: Phase 10 verified — human_needed (R1 fail-open finding, mutmut→WSL/CI)
 progress:
   total_phases: 10
   completed_phases: 10
@@ -29,10 +29,10 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 
 ## Current Position
 
-Phase: 10 (test-hardening) — EXECUTING
+Phase: 10 (test-hardening) — VERIFIED (human_needed, 4/5)
 Plan: 2 of 2
-Status: Phase complete — ready for verification
-Last activity: 2026-07-09 — Phase 10 execution started
+Status: Both plans complete, suite green (326 passed). Verification flagged 2 owner decisions: R1 detector-exception fail-open (exit 1 non-blocking in Claude Code), and mutmut mutation score deferred to WSL/CI (D4).
+Last activity: 2026-07-09 — Phase 10 verified
 
 Progress: [██████████] 100%
 
