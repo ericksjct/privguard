@@ -210,7 +210,29 @@ def check_bash(tool_input: dict) -> tuple[bool, str]:
     return True, ""
 
 
+def _run_fail_closed(impl, *, event: str) -> int:
+    """Run a hook implementation; on ANY Exception, block fail-closed (exit 2).
+
+    BaseException (KeyboardInterrupt/SystemExit) is intentionally NOT caught so
+    it still propagates. The stderr message is a fixed sanitized string — no
+    exception text or prompt-derived content is ever leaked.
+    """
+    try:
+        return impl()
+    except Exception:
+        _audit_log(event=event, action="block", reason_code="detector_error")
+        sys.stderr.write(
+            f"[PII-GUARD BLOQUEADO] reason=detector_error action=block event={event} "
+            "remediation=detector_failed_blocking_by_default\n"
+        )
+        return 2
+
+
 def main_user_prompt() -> int:
+    return _run_fail_closed(_main_user_prompt_impl, event="UserPromptSubmit")
+
+
+def _main_user_prompt_impl() -> int:
     if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
         print("privguard-user-prompt: PreToolUse hook for Claude Code. Reads JSON from stdin.")
         return 0
@@ -331,6 +353,10 @@ def _iter_text_values(value: object) -> list[str]:
 
 
 def main_pre_tool() -> int:
+    return _run_fail_closed(_main_pre_tool_impl, event="PreToolUse")
+
+
+def _main_pre_tool_impl() -> int:
     if len(sys.argv) > 1 and sys.argv[1] in ("-h", "--help"):
         print("privguard-pre-tool: PreToolUse hook for Claude Code. Reads JSON from stdin.")
         return 0

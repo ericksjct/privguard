@@ -50,44 +50,65 @@ def _boom(*_a, **_kw):
     raise RuntimeError("injected detector failure")
 
 
-def test_user_prompt_detector_exception_escapes_unhandled(
+def test_user_prompt_detector_exception_blocks_fail_closed(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # RISCO: an exception raised inside detect() escapes main_user_prompt()
-    # unhandled. As a console script this becomes a traceback + process exit
-    # code 1. Claude Code treats any exit code other than 2 as NON-blocking,
-    # so a crashing detector is FAIL-OPEN today — the prompt proceeds with the
-    # raw PII. Expected fail-closed behavior would be: catch, sanitize, exit 2.
+    # RISCO R1 (fixed in 11-01): an exception raised inside detect() is now
+    # caught by the _run_fail_closed wrapper on main_user_prompt() and mapped to
+    # exit 2 (block) with a sanitized reason_code=detector_error. Claude Code
+    # treats exit 2 as blocking, so a crashing detector now FAILS CLOSED — no
+    # prompt-derived text or exception detail leaks.
     monkeypatch.delenv("PII_GUARD_MODE", raising=False)
     monkeypatch.setattr(hooks, "detect", _boom)
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"prompt": PII_PROMPT})))
 
-    with pytest.raises(RuntimeError):
-        hooks.main_user_prompt()
+    assert hooks.main_user_prompt() == 2
 
     captured = capsys.readouterr()
-    # Nothing prompt-derived may leak before the crash surfaces.
-    assert_no_prompt_derived_text(captured.out + captured.err)
+    output = captured.out + captured.err
+    assert "reason=detector_error" in captured.err
+    assert "action=block" in captured.err
+    assert "Traceback" not in output
+    assert_no_prompt_derived_text(output)
 
 
-def test_pre_tool_detector_exception_escapes_unhandled(
+def test_user_prompt_base_exception_not_swallowed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    # The fail-closed wrapper catches Exception only — BaseException such as
+    # KeyboardInterrupt/SystemExit must still propagate.
+    def _interrupt(*_a, **_kw):
+        raise KeyboardInterrupt
+
+    monkeypatch.delenv("PII_GUARD_MODE", raising=False)
+    monkeypatch.setattr(hooks, "detect", _interrupt)
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps({"prompt": PII_PROMPT})))
+
+    with pytest.raises(KeyboardInterrupt):
+        hooks.main_user_prompt()
+
+
+def test_pre_tool_detector_exception_blocks_fail_closed(
     monkeypatch: pytest.MonkeyPatch,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
-    # RISCO: same fail-open shape on the PreToolUse surface — detect() raising
-    # inside the LLM-orchestration payload scan escapes main_pre_tool()
-    # unhandled (traceback + exit 1 → non-blocking in Claude Code).
+    # RISCO R1 (fixed in 11-01): same fail-closed shape on the PreToolUse
+    # surface — detect() raising inside the LLM-orchestration payload scan is
+    # caught by _run_fail_closed on main_pre_tool() → exit 2, reason=detector_error.
     monkeypatch.delenv("PII_GUARD_MODE", raising=False)
     monkeypatch.setattr(hooks, "detect", _boom)
     payload = {"tool_name": "Task", "tool_input": {"prompt": PII_PROMPT}}
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
 
-    with pytest.raises(RuntimeError):
-        hooks.main_pre_tool()
+    assert hooks.main_pre_tool() == 2
 
     captured = capsys.readouterr()
-    assert_no_prompt_derived_text(captured.out + captured.err)
+    output = captured.out + captured.err
+    assert "reason=detector_error" in captured.err
+    assert "event=PreToolUse" in captured.err
+    assert "Traceback" not in output
+    assert_no_prompt_derived_text(output)
 
 
 # ---------------------------------------------------------------------------
