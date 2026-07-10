@@ -215,21 +215,25 @@ Plans:
 - [x] 10-02-PLAN.md — Tier 2: property-based validators (P5), checksum edges (P6), FP corpus/overlap (P7), mutation + coverage gate (P4)
 
 ### Phase 11: Fail-Closed Hardening
+
 **Goal**: The phase-10 findings are closed so v1.0 delivers its fail-closed promise: an operational failure (detector exception or oversized input) blocks with exit code 2 instead of falling open, the ReDoS-class EMAIL regex is backtracking-safe, and detection resists common evasion (Unicode normalization, checksum-gated fragmentation/concatenation reassembly, single-layer encoded-secret decode-and-rescan) — all without regressing the measured false-positive rate (0.0 baseline from phase 10's P7 corpus).
 **Depends on**: Phase 10
 **Requirements**: DET-07
 **Source**: Closes the RISCO/DECISAO findings recorded in `.planning/phases/10-test-hardening/10-VERIFICATION.md` (R1–R12, D1–D3).
 **Scope honesty**: R1/D2/D3 are correctness guarantees (fail-closed on error, no ReDoS). R2–R11 are recall improvements gated hard on the false-positive corpus; a client-side scanner cannot be adversarially complete, and any evasion pass that would raise the FP rate is dropped and documented as a limitation rather than shipped as noise. D1 (detector-hang watchdog) stays out — it depends on Claude Code's external hook timeout and is a v2 concern.
 **Success Criteria** (what must be TRUE):
+
   1. A detector exception on either hook (`UserPromptSubmit`, `PreToolUse`) blocks with exit code 2 and a sanitized reason — never exits 1 (fail-open). The phase-10 R1 tests now assert block.
   2. Oversized input (over the configured cap) blocks fail-closed with a sanitized reason instead of being scanned in full; the EMAIL regex scales linearly on hostile input (ReDoS closed). The phase-10 D2/D3 tests now assert the bound.
   3. `valida_cartao_sus` rejects unassigned CNS leading-digit ranges (R12); homoglyph/zero-width/combining evasion (R2–R4) is detected via an offset-safe normalization pass.
   4. Checksum-gated reassembly detects fragmented and concatenated Brazilian identifiers (R5, R6, R10, R11); single-layer base64/hex/URL-encoded secrets are caught by decode-and-rescan (R7, R8, R9) — each only where it holds the false-positive corpus at/near 0.0.
   5. The full synthetic suite stays green under the enforced branch-coverage gate, and every phase-10 RISCO test is flipped from "pass-through pinned" to "fixed" or explicitly re-documented as an accepted limitation.
-**Plans**: 4 plans
+
+**Plans**: 1/4 plans executed
 
 Plans:
-- [ ] 11-01-PLAN.md — Fail-closed core: exception→block wrapper on both hooks (R1), input-size cap (D2), backtracking-safe EMAIL regex (D3), SUS leading-digit range check (R12)
+
+- [x] 11-01-PLAN.md — Fail-closed core: exception→block wrapper on both hooks (R1), input-size cap (D2), backtracking-safe EMAIL regex (D3), SUS leading-digit range check (R12)
 - [ ] 11-02-PLAN.md — Offset-safe normalization pass in detect() for homoglyph/zero-width/combining evasion (R2, R3, R4), FP-corpus gated
 - [ ] 11-03-PLAN.md — Checksum-gated denoised rescan for fragmentation + concatenation (R5, R6, R10, R11), FP-corpus gated
 - [ ] 11-04-PLAN.md — Decode-and-rescan for single-layer encoded secrets (R7, R8, R9), FP-corpus gated
@@ -319,7 +323,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8, then back
 | 999.4 CPF Leniency Mode | 2/2 | Complete | 2026-05-21 |
 | 999.5 Detection Hardening v2 | 4/4 | Complete | 2026-05-24 |
 | 10. Test Hardening | 2/2 | Complete   | 2026-07-09 |
-| 11. Fail-Closed Hardening | 0/4 | Not started | — |
+| 11. Fail-Closed Hardening | 1/4 | In Progress|  |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 
