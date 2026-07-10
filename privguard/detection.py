@@ -188,7 +188,13 @@ PATTERNS: list[PatternEntry] = [
     ),
     PatternEntry("BR_CARTAO_SUS", re.compile(r"\b(?:\d{3}\s\d{4}\s\d{4}\s\d{4}|\d{15})\b"), 0.94, valida_cartao_sus, "checksum_valid"),
     PatternEntry("CREDIT_CARD", re.compile(r"\b(?:\d{4}[-\s]?){3}\d{4}\b"), 0.85, valida_luhn, "checksum_valid"),
-    PatternEntry("EMAIL", re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]{2,}\b"), 0.95),
+    # D3 (11-01): atomic groups + RFC-5321 length bounds. The quadratic came
+    # from O(n) `\b` start positions each scanning O(n) to end; bounding the
+    # local part to 64 and domain labels to 63/255 makes every failed start
+    # O(1), so a long "[\w.+-]+ with no @" run scans linearly. Atomic groups
+    # additionally forbid internal backtracking. Legit emails are unaffected
+    # (RFC 5321: local <=64, label <=63).
+    PatternEntry("EMAIL", re.compile(r"\b(?>[\w.+-]{1,64})@(?>[\w-]{1,63})\.(?>[\w.-]{2,255})\b"), 0.95),
     PatternEntry("IBAN", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{12,30}\b"), 0.90),
     PatternEntry("IBAN", re.compile(r"\b[A-Z]{2}\d{2}(?:\s[A-Z0-9]{4}){3,}(?:\s[A-Z0-9]{1,4})?\b"), 0.90),
     PatternEntry("BR_RG", re.compile(r"\b\d{1,2}\.\d{3}\.\d{3}-[\dXx]\b"), 0.78),

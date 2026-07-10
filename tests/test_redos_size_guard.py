@@ -63,32 +63,29 @@ def test_numeric_hostile_inputs_scan_linearly_under_bound(label: str, text: str)
 
 
 def test_email_bait_completes_under_generous_bound() -> None:
-    # DECISAO: the EMAIL regex backtracks on a long "[\w.+-]+ with no @" run,
-    # scaling ~O(n^2). A ~13k-char hostile run currently completes in ~0.4s;
-    # we fence at a generous 3s ceiling. Larger inputs (52k ~7s) blow past any
-    # reasonable bound because NO input-size guard exists — candidate fix
-    # thread: cap input length before regex, and/or migrate risky patterns to
-    # re2 (no backtracking).
+    # D3 (fixed in 11-01): the EMAIL regex uses atomic groups, so a long
+    # "[\w.+-]+ with no @" run can no longer catastrophically backtrack. A
+    # ~13k-char hostile run completes well under a generous 1s ceiling.
     text = "a.b+c-" * 2200  # ~13k chars of email-body chars, never an '@'
-    assert _elapsed_ms(text) < 3000.0
+    assert _elapsed_ms(text) < 1000.0
 
 
-def test_email_bait_is_super_linear_documented_behavior() -> None:
-    # DECISAO (evidence): document that the EMAIL scan is super-linear.
-    # Doubling the hostile input more than doubles the time (quadratic). This
-    # test records the current risk shape rather than fixing it. Bound the
-    # larger case generously (5s) so it stays green on slower machines.
-    small = "a.b+c-" * 1500   # ~9k chars
-    large = "a.b+c-" * 3000   # ~18k chars
+def test_email_bait_scales_linearly_after_atomic_fix() -> None:
+    # D3 (fixed in 11-01): with the atomic-group EMAIL regex the scan is now
+    # LINEAR — doubling the hostile input roughly doubles (not squares) the
+    # time. This flips the phase-10 super-linear pin; a large hostile run must
+    # stay well under a generous ceiling and NOT show quadratic blow-up.
+    small = "a.b+c-" * 3000   # ~18k chars
+    large = "a.b+c-" * 6000   # ~36k chars (2x)
     t_small = _elapsed_ms(small)
     t_large = _elapsed_ms(large)
-    assert t_large < 5000.0
-    # Super-linear signature: 2x input costs clearly more than 2x time.
-    # Guard with a floor on t_small to avoid dividing noise near zero.
-    if t_small > 20.0:
-        assert t_large > t_small * 2.0, (
-            "EMAIL scan expected super-linear; if this fails the regex may have "
-            "been fixed — update the DECISAO entry in the SUMMARY."
+    assert t_large < 1000.0, "atomic EMAIL regex should stay fast on hostile input"
+    # Linear signature: 2x input costs roughly <=2x time (generous 4x slack for
+    # timer noise / constant overhead). Quadratic behavior would blow past this.
+    if t_small > 5.0:
+        assert t_large < t_small * 4.0, (
+            "EMAIL scan expected ~linear after the atomic-group fix; a >4x jump "
+            "on 2x input signals a regression back to super-linear backtracking."
         )
 
 
