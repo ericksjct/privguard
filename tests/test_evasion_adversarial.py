@@ -18,7 +18,13 @@ Behavior snapshot at authoring time (min_score=0.7):
 
 Update (11-02): the offset-safe normalization pass in detect() now closes the
 cyrillic_homoglyph (R2), zero_width (R3), and combining_chars (R4) vectors —
-these are asserted DETECTED below. R5–R11 remain pinned as PASS-THROUGH.
+these are asserted DETECTED below.
+
+Update (11-03): the checksum-gated denoised rescan closes the formatted
+fragmentation/concatenation vectors — fragmented_lines (R5), whitespace_injected
+(R6), and code_concat (R10) are now DETECTED. fstring_concat (R11) stays an
+ACCEPTED LIMITATION (runtime f-string interpolation is not textual). The
+encoding vectors (b64/hex/urlenc secrets) remain pinned as PASS-THROUGH.
 """
 
 from __future__ import annotations
@@ -85,18 +91,20 @@ def test_combining_chars_on_cpf_digits_is_detected() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_cpf_fragmented_across_lines_passes_through() -> None:
-    # RISCO: a newline splitting the CPF breaks the single-line regex; the
-    # fragmented value passes through. Documented, not fixed.
+def test_cpf_fragmented_across_lines_is_detected() -> None:
+    # RISCO fixed in 11-03: the checksum-gated denoised pass strips the injected
+    # newline, reassembles the formatted CPF, and the checksum passes — DETECTED
+    # (reason_code reassembled_checksum_valid).
     text = RAW_CPF[:8] + "\n" + RAW_CPF[8:]
-    assert not _any_hit(text)
+    assert _has_cpf(text)
 
 
-def test_whitespace_injected_between_digits_passes_through() -> None:
-    # RISCO: a space between every character defeats the contiguous match;
-    # CPF passes through. Documented, not fixed.
+def test_whitespace_injected_between_digits_is_detected() -> None:
+    # RISCO fixed in 11-03: the denoised pass strips the injected spaces; the
+    # formatted CPF (dots/hyphen survive) reassembles and passes checksum —
+    # DETECTED.
     text = " ".join(RAW_CPF)
-    assert not _any_hit(text)
+    assert _has_cpf(text)
 
 
 # ---------------------------------------------------------------------------
@@ -128,16 +136,21 @@ def test_url_encoded_secret_passes_through() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_string_concatenation_cpf_passes_through() -> None:
-    # RISCO: CPF split across a "a" + "b" concatenation is never reassembled by
-    # the static regex scan; passes through. Documented, not fixed.
+def test_string_concatenation_cpf_is_detected() -> None:
+    # RISCO fixed in 11-03: the denoised pass strips quotes and the plus sign,
+    # reassembling `"123.456" + ".789-09"` into the formatted CPF, which passes
+    # checksum — DETECTED.
     text = 'cpf = "' + RAW_CPF[:7] + '" + "' + RAW_CPF[7:] + '"'
-    assert not _has_cpf(text)
+    assert _has_cpf(text)
 
 
 def test_fstring_concatenation_cpf_passes_through() -> None:
-    # RISCO: f-string reassembly of a CPF is invisible to static scanning;
-    # passes through. Documented, not fixed.
+    # RISCO ACCEPTED LIMITATION (11-03): the f-string reassembles the CPF at
+    # RUNTIME via `{p}` interpolation, not textually. Stripping separators
+    # leaves the literal `{p}` between the fragments, so the value never
+    # reassembles in static text. Fixing this would require evaluating code, out
+    # of scope for a static scanner; left pinned as pass-through, documented in
+    # the 11-03 SUMMARY.
     text = 'p = "' + RAW_CPF[:7] + '"\ncpf = f"{p}' + RAW_CPF[7:] + '"'
     assert not _has_cpf(text)
 
