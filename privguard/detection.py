@@ -134,6 +134,11 @@ def valida_cartao_sus(cartao: str) -> bool:
     cartao = _digits(cartao)
     if len(cartao) != 15:
         return False
+    # CNS leading digit must be an assigned range: 1,2 (definitive) or
+    # 7,8,9 (provisional). Reject unassigned ranges (3-6, 0) even with a
+    # valid checksum (R12, 11-01).
+    if cartao[0] not in "12789":
+        return False
     s = sum(int(cartao[i]) * (15 - i) for i in range(15))
     return s % 11 == 0
 

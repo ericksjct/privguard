@@ -111,12 +111,11 @@ def test_sus_valid_leading_digit_ranges_accepted(first: int) -> None:
 
 
 @pytest.mark.parametrize("first", [3, 4, 5, 6])
-def test_sus_out_of_range_leading_digit_still_accepted(first: int) -> None:
-    # RISCO: valida_cartao_sus only checks length 15 and weighted-sum % 11 == 0.
-    # It does NOT enforce the CNS leading-digit ranges, so an unassigned range
-    # (3-6) with a valid checksum is accepted as a SUS card. Candidate fix
-    # thread: add a leading-digit range guard. Pinned as current behavior.
-    assert valida_cartao_sus(_valid_sus_with_first(first)) is True
+def test_sus_out_of_range_leading_digit_rejected(first: int) -> None:
+    # R12 (fixed in 11-01): valida_cartao_sus now enforces the CNS leading-digit
+    # ranges. An unassigned range (3-6) is rejected even when the weighted-sum
+    # checksum is valid — the leading-digit guard runs before the checksum.
+    assert valida_cartao_sus(_valid_sus_with_first(first)) is False
 
 
 # ---------------------------------------------------------------------------
