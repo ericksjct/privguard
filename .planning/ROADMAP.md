@@ -229,13 +229,13 @@ Plans:
   4. Checksum-gated reassembly detects fragmented and concatenated Brazilian identifiers (R5, R6, R10, R11); single-layer base64/hex/URL-encoded secrets are caught by decode-and-rescan (R7, R8, R9) — each only where it holds the false-positive corpus at/near 0.0.
   5. The full synthetic suite stays green under the enforced branch-coverage gate, and every phase-10 RISCO test is flipped from "pass-through pinned" to "fixed" or explicitly re-documented as an accepted limitation.
 
-**Plans**: 2/4 plans executed
+**Plans**: 3/4 plans executed
 
 Plans:
 
 - [x] 11-01-PLAN.md — Fail-closed core: exception→block wrapper on both hooks (R1), input-size cap (D2), backtracking-safe EMAIL regex (D3), SUS leading-digit range check (R12)
 - [x] 11-02-PLAN.md — Offset-safe normalization pass in detect() for homoglyph/zero-width/combining evasion (R2, R3, R4), FP-corpus gated
-- [ ] 11-03-PLAN.md — Checksum-gated denoised rescan for fragmentation + concatenation (R5, R6, R10, R11), FP-corpus gated
+- [x] 11-03-PLAN.md — Checksum-gated denoised rescan for fragmentation + concatenation (R5, R6, R10, R11), FP-corpus gated
 - [ ] 11-04-PLAN.md — Decode-and-rescan for single-layer encoded secrets (R7, R8, R9), FP-corpus gated
 
 ## Backlog
@@ -323,7 +323,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8, then back
 | 999.4 CPF Leniency Mode | 2/2 | Complete | 2026-05-21 |
 | 999.5 Detection Hardening v2 | 4/4 | Complete | 2026-05-24 |
 | 10. Test Hardening | 2/2 | Complete   | 2026-07-09 |
-| 11. Fail-Closed Hardening | 2/4 | In Progress|  |
+| 11. Fail-Closed Hardening | 3/4 | In Progress|  |
 
 ### Phase 8: eu quero que o usuário possa escolher se ele quer rodar o hook no modo de mascaramento sem bloqueio ou com bloqueio na detecção de pii
 

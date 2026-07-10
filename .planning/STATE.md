@@ -6,14 +6,14 @@ current_phase: 11
 current_phase_name: fail-closed-hardening
 status: executing
 stopped_at: Phase 10 verified (4/5) — R1 fail-open + mutmut deferral need owner decision
-last_updated: "2026-07-10T01:07:26.116Z"
+last_updated: "2026-07-10T01:19:29.317Z"
 last_activity: 2026-07-10
 last_activity_desc: Phase 11 execution started
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 33
-  completed_plans: 31
+  completed_plans: 32
   percent: 91
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 11 (fail-closed-hardening) — EXECUTING
-Plan: 3 of 4
+Plan: 4 of 4
 Status: Ready to execute
 Last activity: 2026-07-10 — Phase 11 execution started
 
@@ -81,6 +81,7 @@ Progress: [██████████] 100%
 | Phase 10 P02 | 11min | 4 tasks | 4 files |
 | Phase 11 P11-01 | 11min | 5 tasks | 5 files |
 | Phase 11 P11-02 | 9min | 3 tasks | 2 files |
+| Phase 11 P11-03 | 14min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -115,6 +116,7 @@ Recent decisions affecting current work:
 - [Phase ?]: 11-01 fail-closed hardening: exception wrapper blocks exit 2, 1 MB hook input-size guard, linear EMAIL regex, CNS leading-digit range
 - [Phase ?]: 11-02: offset-safe detection normalization (1:1 confusable-digit translate + Cf/Mn removal); NFKC deliberately avoided as length-changing would break Hit offset mapping
 - [Phase ?]: 11-02: _CONFUSABLE_DIGITS kept conservative/digits-only (fullwidth + Cyrillic Ze/O homoglyphs) to hold FP corpus at 0.0
+- [Phase ?]: 11-03: denoised rescan strips whitespace/quotes/plus, keeps dots/hyphens/slashes; emits only format-separated checksum-valid matches (bare-digit reassembly never emitted) — closes R5/R6/R10, R11 accepted limitation
 
 ### Roadmap Evolution
 
@@ -142,6 +144,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-10T01:06:16.661Z
+Last session: 2026-07-10T01:18:47.178Z
 Stopped at: Completed 09-03-PLAN.md
 Resume file: None
