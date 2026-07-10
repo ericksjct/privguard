@@ -23,8 +23,16 @@ these are asserted DETECTED below.
 Update (11-03): the checksum-gated denoised rescan closes the formatted
 fragmentation/concatenation vectors — fragmented_lines (R5), whitespace_injected
 (R6), and code_concat (R10) are now DETECTED. fstring_concat (R11) stays an
-ACCEPTED LIMITATION (runtime f-string interpolation is not textual). The
-encoding vectors (b64/hex/urlenc secrets) remain pinned as PASS-THROUGH.
+ACCEPTED LIMITATION (runtime f-string interpolation is not textual).
+
+Update (11-04): the single-layer decode-and-rescan stage closes the encoding
+vectors — b64_secret (R7), hex_secret (R8), and urlenc_secret (R9) are now
+DETECTED (the encoded blob is reversed one layer and rescanned for
+high-confidence secrets only). A benign base64 blob that decodes to non-secret
+text still produces no hit. Residual limitations (documented in the 11-04
+SUMMARY): double/multi-layer encoding and encoded numeric BR identifiers are out
+of reach; fstring_concat (R11) remains an ACCEPTED LIMITATION; D1 (hang
+watchdog) and D4 (mutmut on win32) stay OUT OF SCOPE for v1.
 """
 
 from __future__ import annotations
@@ -112,22 +120,35 @@ def test_whitespace_injected_between_digits_is_detected() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_base64_encoded_secret_passes_through() -> None:
-    # RISCO: a base64-encoded secret is opaque to the plaintext token regexes;
-    # passes through. Documented, not fixed (no decode-and-rescan stage exists).
+def test_base64_encoded_secret_is_detected() -> None:
+    # RISCO fixed in 11-04: the decode-and-rescan stage reverses the base64 blob,
+    # rescans with the high-confidence secret patterns, and finds the API key —
+    # DETECTED (reason_code encoded_secret_base64), hit spans the encoded blob.
     text = "payload=" + base64.b64encode(SECRET_LOOKING.encode()).decode()
-    assert not _any_hit(text)
+    assert _any_hit(text)
 
 
-def test_hex_encoded_secret_passes_through() -> None:
-    # RISCO: hex-encoded secret passes through undetected. Documented, not fixed.
+def test_hex_encoded_secret_is_detected() -> None:
+    # RISCO fixed in 11-04: the hex blob is reversed single-layer and the decoded
+    # secret is matched — DETECTED (reason_code encoded_secret_hex).
     text = "payload=" + SECRET_LOOKING.encode().hex()
-    assert not _any_hit(text)
+    assert _any_hit(text)
 
 
-def test_url_encoded_secret_passes_through() -> None:
-    # RISCO: percent-encoded secret passes through undetected. Documented, not fixed.
+def test_url_encoded_secret_is_detected() -> None:
+    # RISCO fixed in 11-04: the percent-encoded run is unquoted single-layer and
+    # the decoded secret is matched — DETECTED (reason_code encoded_secret_url).
     text = "payload=" + "".join(f"%{b:02X}" for b in SECRET_LOOKING.encode())
+    assert _any_hit(text)
+
+
+def test_base64_of_benign_text_produces_no_hit() -> None:
+    # FP guard for the decode-and-rescan stage: a base64 blob that decodes to
+    # valid UTF-8 with NO secret inside must produce NO hit. This exercises the
+    # decode-succeeds-but-no-secret path — the case that separates a real encoded
+    # secret from ordinary base64 (config, IDs, text) copy-pasted into a prompt.
+    benign = "the quarterly report is due next friday afternoon at the office"
+    text = "payload=" + base64.b64encode(benign.encode()).decode()
     assert not _any_hit(text)
 
 
