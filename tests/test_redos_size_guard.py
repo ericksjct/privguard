@@ -1,21 +1,21 @@
 """P3 ReDoS latency-bound + input-size behavior suite (Phase 10 / TEST-07).
 
-Feeds backtracking-hostile inputs to detect() and pins CURRENT latency and
-oversized-input behavior. No production code is added here (handoff rule):
-this plan documents behavior; a size guard / re2 migration are candidate fix
-threads recorded as DECISAO items in the plan SUMMARY.
+Feeds backtracking-hostile inputs to detect() and bounds their latency. Phase
+10 pinned the EMAIL regex as super-linear (DECISAO D3); 11-01 fixed it, so the
+EMAIL tests here now assert LINEAR scaling. The hook-level input-size guard
+(D2) is asserted in test_fail_closed_injection; detect() itself stays uncapped
+for the CLI scan/mask path.
 
-Key finding (measured at authoring time, single-threaded, Python 3.14):
+Key behavior (Python 3.14):
   - Pure digit runs (CNPJ/CPF/SUS/boleto numeric patterns) scan LINEARLY and
-    fast (50k digits ~30 ms) — no catastrophic backtracking there.
-  - The EMAIL regex ``\\b[\\w.+-]+@[\\w-]+\\.[\\w.-]{2,}\\b`` scans a long run
-    of ``[\\w.+-]`` characters that never reaches an '@' in roughly O(n^2):
-    13k chars ~0.4 s, 26k ~1.6 s, 52k ~7.2 s. This is a genuine super-linear
-    ReDoS-class latency risk (DECISAO: input-size guard + re2 migration).
+    fast (50k digits ~30 ms) — no catastrophic backtracking.
+  - The EMAIL regex is now ``\\b(?>[\\w.+-]{1,64})@(?>[\\w-]{1,63})\\.(?>[\\w.-]{2,255})\\b``:
+    atomic groups + RFC-5321 length bounds remove the phase-10 O(n^2) scan
+    (72k hostile chars ~24 ms, linear).
 
 All fixtures are synthetic; no realistic Brazilian PII literal is introduced.
 Latency ceilings are deliberately generous to avoid CI flakiness while still
-fencing against a regression into exponential/worse behavior.
+fencing against a regression back into super-linear backtracking.
 """
 
 from __future__ import annotations
@@ -58,7 +58,7 @@ def test_numeric_hostile_inputs_scan_linearly_under_bound(label: str, text: str)
 
 
 # ---------------------------------------------------------------------------
-# EMAIL regex: super-linear (quadratic) — documented DECISAO
+# EMAIL regex: linear after atomic-group + length-bound fix (D3, 11-01)
 # ---------------------------------------------------------------------------
 
 

@@ -89,7 +89,7 @@ def test_cpf_dv_zero_boundary_valid_and_detected() -> None:
 
 
 # ---------------------------------------------------------------------------
-# SUS card leading-digit ranges — NO range enforcement today (RISCO)
+# SUS card leading-digit ranges — enforced (R12 fixed in 11-01)
 # ---------------------------------------------------------------------------
 
 
