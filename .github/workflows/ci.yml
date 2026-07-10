@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: pytest (${{ matrix.os }}, py${{ matrix.python }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      # addopts in pyproject.toml carries the branch-coverage gate
+      # (--cov-fail-under=84): a coverage regression fails this job.
+      - name: Test suite (with coverage gate)
+        run: python -m pytest -q
+
+  mutation:
+    # Closes D4 (phase 11): mutmut cannot run on win32 (boxed/mutmut#397),
+    # so the mutation score over the checksum/decision core is produced here
+    # on Linux. Survivors are reported, not build-blocking — converting them
+    # into tests is tracked work, not a red X on every push.
+    name: mutmut (checksum/decision core)
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Install
+        run: python -m pip install -e ".[dev]"
+      # --no-cov (appended via PYTEST_ADDOPTS) disables the coverage gate for
+      # mutmut's inner pytest runs: otherwise a mutation that only lowers
+      # coverage exits pytest non-zero and mutmut miscounts it as killed,
+      # inflating the score. mutmut kills on assertion failures, not coverage.
+      - name: Run mutation testing
+        env:
+          PYTEST_ADDOPTS: "--no-cov"
+        run: mutmut run || true
+      - name: Report results
+        run: mutmut results
