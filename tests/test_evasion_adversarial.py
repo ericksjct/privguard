@@ -15,6 +15,10 @@ Behavior snapshot at authoring time (min_score=0.7):
   PASS-THROUGH : cyrillic_homoglyph, zero_width, combining_chars,
                  fragmented_lines, whitespace_injected, b64_secret,
                  hex_secret, urlenc_secret, code_concat, fstring_concat
+
+Update (11-02): the offset-safe normalization pass in detect() now closes the
+cyrillic_homoglyph (R2), zero_width (R3), and combining_chars (R4) vectors —
+these are asserted DETECTED below. R5–R11 remain pinned as PASS-THROUGH.
 """
 
 from __future__ import annotations
@@ -53,25 +57,27 @@ def test_fullwidth_digit_cpf_is_detected() -> None:
     assert _has_cpf(text)
 
 
-def test_cyrillic_homoglyph_cpf_passes_through() -> None:
-    # RISCO: Cyrillic homoglyph digits (е.g. З/О swapped for 3/0) break the
-    # ASCII-digit regex; the CPF passes through undetected. Documented, not fixed.
+def test_cyrillic_homoglyph_cpf_is_detected() -> None:
+    # RISCO fixed in 11-02: the offset-safe _CONFUSABLE_DIGITS map translates
+    # the Cyrillic homoglyph digits (З→3, О→0) back to ASCII before scanning,
+    # so the CPF is now DETECTED.
     text = RAW_CPF.replace("3", "З").replace("0", "О")
-    assert not _any_hit(text)
+    assert _has_cpf(text)
 
 
-def test_zero_width_chars_inside_cpf_pass_through() -> None:
-    # RISCO: zero-width spaces injected between every character break the
-    # contiguous-digit match; CPF passes through. Documented, not fixed.
+def test_zero_width_chars_inside_cpf_is_detected() -> None:
+    # RISCO fixed in 11-02: normalization drops zero-width/format (Cf) chars,
+    # so the interleaved-ZWSP CPF is now DETECTED (offsets still index the
+    # original, ZWSP-laden span).
     text = _ZERO_WIDTH.join(RAW_CPF)
-    assert not _any_hit(text)
+    assert _has_cpf(text)
 
 
-def test_combining_chars_on_cpf_digits_pass_through() -> None:
-    # RISCO: combining acute accents appended to each digit defeat the match;
-    # CPF passes through. Documented, not fixed.
+def test_combining_chars_on_cpf_digits_is_detected() -> None:
+    # RISCO fixed in 11-02: normalization drops nonspacing-combining (Mn)
+    # marks, so the accented-digit CPF is now DETECTED.
     text = "".join(c + _COMBINING_ACUTE if c.isdigit() else c for c in RAW_CPF)
-    assert not _any_hit(text)
+    assert _has_cpf(text)
 
 
 # ---------------------------------------------------------------------------
