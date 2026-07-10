@@ -348,6 +348,83 @@ def _map_hit_to_original(h: Hit, text: str, idx: list[int]) -> Hit:
                h.score, h.reason_code, h.source)
 
 
+# Separators an attacker can inject between an identifier's characters without
+# changing how a human reads the value: whitespace/newlines, single/double
+# quotes, and plus signs (source-level string concatenation). Stripping them
+# reassembles a CPF fragmented across lines (R5), spaced between digits (R6),
+# or concatenated in code (R10). Dots/hyphens/slashes are deliberately NOT
+# stripped — the formatted regexes depend on them, and their survival is the
+# signal that keeps the denoised pass from firing on benign whitespace-joined
+# numbers.
+_DENOISE_STRIP = frozenset("'\"+")
+
+# A reassembled match is only emitted if it still carries one of these format
+# separators. Bare all-digit runs (whitespace-joined phone digits, all of
+# BR_CNH, the \d{11}/\d{12}/\d{15} regex branches) are too collision-prone once
+# separators are stripped, so they are NOT emitted from the denoised pass.
+_DENOISE_SEP_RE = re.compile(r"[.\-/]")
+
+# Denoised-pass patterns: only checksum-bearing kinds, so a reassembled false
+# match is bounded by checksum collision (~1/100 for CPF) rather than a loose
+# regex. Reused from PATTERNS so the regexes live in exactly one place.
+_DENOISED_PATTERNS: list[PatternEntry] = [
+    p for p in PATTERNS if p.validator is not None and p.kind in CANONICAL_VALIDATORS
+]
+
+
+def _denoise(norm: str, orig_index: list[int]) -> tuple[str, list[int]]:
+    """Strip injectable separators from ``norm``, composing the original map.
+
+    Returns ``(denoised, den_index)`` where ``den_index[j]`` is the offset in the
+    ORIGINAL text of denoised char ``j`` (composed through ``orig_index`` from
+    the normalization pass). Reassembles fragmented / concatenated identifiers
+    so a checksum-gated rescan can catch them, while the map lets surviving hits
+    be rebased onto the original span.
+    """
+    out: list[str] = []
+    idx: list[int] = []
+    for i, ch in enumerate(norm):
+        if ch.isspace() or ch in _DENOISE_STRIP:
+            continue
+        out.append(ch)
+        idx.append(orig_index[i])
+    return "".join(out), idx
+
+
+def _denoised_hits(
+    denoised: str, den_index: list[int], text: str, existing: list[Hit]
+) -> list[Hit]:
+    """Checksum-gated hits reassembled from separator-stripped text.
+
+    Only checksum-bearing patterns run; a match is kept only if it still carries
+    a format separator AND passes its validator, so false positives stay bounded
+    by checksum collision on formatted values (bare-digit reassembly is skipped
+    as too collision-prone). Hits are rebased onto the ORIGINAL ``text`` via
+    ``den_index`` and deduplicated against ``existing`` primary hits by
+    (kind, digits) so a value already caught normally is not double-reported.
+    reason_code ``reassembled_checksum_valid`` marks their provenance. When the
+    original span cannot be mapped exactly it still spans the contributing
+    chars, forcing a block (never a silent allow).
+    """
+    seen = {(h.kind, _digits(h.value)) for h in existing}
+    out: list[Hit] = []
+    for entry in _DENOISED_PATTERNS:
+        for m in entry.regex.finditer(denoised):
+            value = m.group(0)
+            if not _DENOISE_SEP_RE.search(value):
+                continue  # bare-digit run — collision-prone, not emitted
+            if not entry.validator(value):  # type: ignore[misc]  # filtered non-None
+                continue
+            key = (entry.kind, _digits(value))
+            if key in seen:
+                continue
+            seen.add(key)
+            o_start, o_end = den_index[m.start()], den_index[m.end() - 1] + 1
+            out.append(Hit(entry.kind, o_start, o_end, text[o_start:o_end],
+                           entry.score, "reassembled_checksum_valid"))
+    return out
+
+
 def detect(
     text: str,
     min_score: float = 0.6,
@@ -390,6 +467,17 @@ def detect(
         raw.extend(_find_name_hits(scan))
     if not identity:
         raw = [_map_hit_to_original(h, text, orig_index) for h in raw]
+    # raw is now on ORIGINAL offsets. Denoised second pass: strip injectable
+    # separators and rescan with checksum-bearing patterns only, keeping
+    # validator-passers whose value retains a format separator. This reassembles
+    # fragmented (R5/R6) and concatenated (R10) formatted identifiers; the
+    # checksum + format-separator gate keeps the FP corpus at 0.0. It is a true
+    # no-op when nothing was stripped, so benign separator-free text is
+    # unaffected. f-string interpolation (R11) reassembles at runtime, not
+    # textually, so it stays an accepted limitation.
+    denoised, den_index = _denoise(norm, orig_index)
+    if len(denoised) < len(norm):
+        raw.extend(_denoised_hits(denoised, den_index, text, raw))
     raw = [h for h in raw if h.score >= min_score]
     raw.sort(key=lambda h: (-h.score, -(h.end - h.start), h.start))
     kept: list[Hit] = []
