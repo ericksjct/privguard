@@ -6,14 +6,14 @@ current_phase: 11
 current_phase_name: fail-closed-hardening
 status: executing
 stopped_at: Phase 10 verified (4/5) — R1 fail-open + mutmut deferral need owner decision
-last_updated: "2026-07-10T00:55:30.033Z"
+last_updated: "2026-07-10T01:07:26.116Z"
 last_activity: 2026-07-10
 last_activity_desc: Phase 11 execution started
 progress:
   total_phases: 11
   completed_phases: 10
   total_plans: 33
-  completed_plans: 30
+  completed_plans: 31
   percent: 91
 ---
 
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-05-01)
 ## Current Position
 
 Phase: 11 (fail-closed-hardening) — EXECUTING
-Plan: 2 of 4
+Plan: 3 of 4
 Status: Ready to execute
 Last activity: 2026-07-10 — Phase 11 execution started
 
@@ -80,6 +80,7 @@ Progress: [██████████] 100%
 | Phase 10 P01 | 17min | 4 tasks | 4 files |
 | Phase 10 P02 | 11min | 4 tasks | 4 files |
 | Phase 11 P11-01 | 11min | 5 tasks | 5 files |
+| Phase 11 P11-02 | 9min | 3 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -112,6 +113,8 @@ Recent decisions affecting current work:
 - [Phase 10]: Plan 10-01 pinned current behavior only: detector-exception fail-open (exit 1 non-blocking) recorded as RISCO R1; EMAIL regex super-linear O(n^2) and absent input-size guard recorded as DECISAO; no production code changed.
 - [Phase 10]: Plan 10-02 pinned Tier 2 behavior only: new RISCO R12 (SUS card has no leading-digit range check) and DECISAO D4 (mutmut has no native win32 support, run under WSL/CI); enforced branch-coverage gate cov-fail-under=84; no production code changed.
 - [Phase ?]: 11-01 fail-closed hardening: exception wrapper blocks exit 2, 1 MB hook input-size guard, linear EMAIL regex, CNS leading-digit range
+- [Phase ?]: 11-02: offset-safe detection normalization (1:1 confusable-digit translate + Cf/Mn removal); NFKC deliberately avoided as length-changing would break Hit offset mapping
+- [Phase ?]: 11-02: _CONFUSABLE_DIGITS kept conservative/digits-only (fullwidth + Cyrillic Ze/O homoglyphs) to hold FP corpus at 0.0
 
 ### Roadmap Evolution
 
@@ -139,6 +142,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-10T00:53:51.058Z
+Last session: 2026-07-10T01:06:16.661Z
 Stopped at: Completed 09-03-PLAN.md
 Resume file: None
